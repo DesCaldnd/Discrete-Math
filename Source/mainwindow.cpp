@@ -6,15 +6,16 @@
 
 #include "../Headers/mainwindow.h"
 #include "ui_MainWindow.h"
-#include "QRegularExpressionValidator"
+#include <QRegularExpressionValidator>
 
 
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     setMinimumSize(800, 450);
-    QRegularExpressionValidator validator{QRegExp("[0-9]*"), ui->expr_edit};
-    ui->expr_edit->setValidator(validator);
+    QRegularExpressionValidator validator{QRegularExpression{"^[-]?[\\(]*[-]?[a-zA-Z10]?(([&|+<\\\\])[-]?[\\(]*([-]?[a-zA-Z10]?)[\\)]*)*$"}, this};
+//    ^[-]?[\(]*[-]?[a-zA-Z10]?(([&|+<\\])[-]?[\(]*([-]?[a-zA-Z10]?)[\)]*)*$
+    ui->expr_edit->setValidator(&validator);
 }
 
 MainWindow::~MainWindow() {
