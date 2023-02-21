@@ -10,7 +10,7 @@
 class Variable : public ExpressionSymbol{
     proxy data;
 
-
+    Type type = ExpressionSymbol::Type::Var;
 public:
     void setSymbol(char) override;
 
@@ -24,7 +24,7 @@ public:
 
     Variable(char, int);
 
-    bool value;
+    ExpressionSymbol::Type getType() override;
 
 };
 

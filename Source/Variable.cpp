@@ -26,10 +26,14 @@ Variable::Variable(char symbol) {
 
 Variable::Variable(char symbol, int position) {
     setSymbol(symbol);
-    position = position;
+    positionOfStart = positionOfEnd = position;
 }
 
 int Variable::getIndex() {
     return data.index;
+}
+
+ExpressionSymbol::Type Variable::getType() {
+    return type;
 }
 

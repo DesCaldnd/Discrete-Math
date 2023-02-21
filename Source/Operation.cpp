@@ -42,5 +42,9 @@ int Operation::getOrder() {
 
 Operation::Operation(char sym, int pos) {
     setSymbol(sym);
-    position = pos;
+    positionOfStart = positionOfEnd = pos;
+}
+
+ExpressionSymbol::Type Operation::getType() {
+    return type;
 }

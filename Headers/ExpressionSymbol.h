@@ -14,15 +14,25 @@ protected:
         int index = -1;
     };
 
+
+
     virtual void setIndex(int) =0;
 
 public:
 
-    int position = 0;
+    enum Type{
+        Oper, Var
+    };
+
+    bool value = 0;
+
+    int positionOfStart = 0, positionOfEnd;
 
     virtual void setSymbol(char) =0;
 
     virtual char getSymbol() = 0;
+
+    virtual Type getType() =0;
 };
 
 

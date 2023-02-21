@@ -15,10 +15,15 @@ class Operation : public ExpressionSymbol{
 
     static const std::vector<proxy> ORDER_LIST;
 
+    Type type = ExpressionSymbol::Type::Oper;
 public:
+
+
     void setSymbol(char) override;
 
     char getSymbol() override;
+
+    ExpressionSymbol::Type getType() override;
 
     static int order(char);
 

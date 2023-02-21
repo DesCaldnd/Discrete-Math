@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <vector>
 #include "Variable.h"
+#include "Operation.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -40,9 +41,11 @@ private:
 
     unsigned int power_of_2(unsigned int);
 
-    QString change_var_to_value(QString);
+    std::vector<ExpressionSymbol*> change_var_to_value(std::vector<ExpressionSymbol*>);
 
     bool value_of_var(char);
+
+    Variable calc_value(Variable, Variable, Operation);
 
     QMessageBox errorMessageBox{this};
 

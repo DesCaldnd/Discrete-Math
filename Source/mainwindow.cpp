@@ -10,8 +10,6 @@
 #include <QPushButton>
 #include <QDebug>
 #include <stack>
-#include "../Headers/Operation.h"
-#include "../Headers/Variable.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -122,6 +120,7 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
             }
             case Constant: {
                 answer.push_back(new Variable(sym, i));
+                answer[answer.size()-1]->value = (sym == '1');
                 break;
             }
         }
@@ -209,12 +208,33 @@ bool MainWindow::check_string_for_end(const QString &string) {
     return true;
 }
 
-void MainWindow::evaluate_expression(const QString &expression) {
+void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression) {
+    ui->table->clear();
+    ui->table->setRowCount(power_of_2(variables.size()));
+    ui->table->setColumnCount(variables.size() + 1);
     for(unsigned int i = power_of_2(variables.size()) - 1; i >= 0; i--){
         for(int j = 0; j < variables.size(); j++){
             variables[j].value = (1u << variables.size() - (j + 1)) & i;
+            ui->table->setItem((power_of_2(variables.size()) - 1) - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
         }
-
+        auto var_expression = change_var_to_value(expression);
+        std::stack<ExpressionSymbol*> exprStack;
+        for (int j = 0; j < var_expression.size(); j++){
+            if(var_expression[j]->getType() == ExpressionSymbol::Type::Var){
+                exprStack.push(var_expression[i]);
+            } else{
+                if(var_expression[i]->getSymbol() == '-'){
+                    exprStack.top()->value = !exprStack.top()->value;
+                } else{
+                    auto second_val = exprStack.top();
+                    exprStack.pop();
+                    auto first_val = exprStack.top();
+                    exprStack.pop();
+                    exprStack.push(new Variable(calc_value(*first_val, *second_val, *var_expression[i])));
+                }
+            }
+        }
+        ui->table->setItem((power_of_2(variables.size()) - 1) - i, ui->table->columnCount() - 1, new QTableWidgetItem(QString::number(exprStack.top()->value)));
     }
 }
 
@@ -226,10 +246,10 @@ unsigned int MainWindow::power_of_2(unsigned int pow) {
     return result;
 }
 
-QString MainWindow::change_var_to_value(QString expression) {
-    for(int i = 0; i < expression.length(); i++){
-        if(symType(expression[i].toLatin1()) == MainWindow::SymType::Var){
-            expression[i] = QChar(value_of_var(expression[i]));
+std::vector<ExpressionSymbol*> MainWindow::change_var_to_value(std::vector<ExpressionSymbol*> expression) {
+    for(int i = 0; i < expression.size(); i++){
+        if(symType(expression[i]->getSymbol()) == MainWindow::SymType::Var){
+            expression[i]->value = value_of_var(expression[i]->getSymbol());
         }
     }
     return QString();
@@ -240,4 +260,38 @@ bool MainWindow::value_of_var(char var) {
         if (var == variables[i].getSymbol())
             return variables[i].value;
     }
+}
+
+Variable MainWindow::calc_value(Variable first_var, Variable second_var, Operation oper) {
+    Variable result{'1', first_var.positionOfStart};
+    result.positionOfEnd = second_var.positionOfEnd;
+    bool f = first_var.value, s = second_var.value;
+    switch (oper.getSymbol()){
+        case '&':{
+            f = f && s;
+            break;
+        }
+        case '|':{
+            f = f || s;
+            break;
+        }
+        case '<':{
+            f = f <= s;
+            break;
+        }
+        case '~':{
+            f = f == s;
+            break;
+        }
+        case '/':{
+            f = f && !s;
+            break;
+        }
+        case '+':{
+            f = f != s;
+            break;
+        }
+    }
+    result.value = f;
+    return result;
 }
