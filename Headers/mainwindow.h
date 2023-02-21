@@ -28,6 +28,8 @@ private:
 
     bool check_string_for_brackets(const QString&);
 
+    bool check_string_for_operators(const QString&);
+
     std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
 
     bool hasVar(char);
