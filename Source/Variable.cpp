@@ -32,3 +32,4 @@ Variable::Variable(char symbol, int position) {
 int Variable::getIndex() {
     return data.index;
 }
+

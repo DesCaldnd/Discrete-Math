@@ -46,6 +46,16 @@ void MainWindow::eval_button_clicked() {
         errorMessageBox.exec();
         return;
     }
+    if (!check_string_for_operators(string)){
+        errorMessageBox.setText("More than one operator in a row");
+        errorMessageBox.exec();
+        return;
+    }
+    if (!check_string_for_end(string)){
+        errorMessageBox.setText("This expression is not completed");
+        errorMessageBox.exec();
+        return;
+    }
     auto expression = expr_to_postfix(string);
     QString x;
     for(int i = 0; i < expression.size(); i++){
@@ -71,6 +81,7 @@ bool MainWindow::check_string_for_brackets(const QString &string) {
 
 std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string) {
     variables.clear();
+    operCount = 0;
 
     std::vector<ExpressionSymbol*> answer;
     std::stack<Operation> operationStack;
@@ -81,7 +92,7 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
             case Var: {
                 answer.push_back(new Variable(sym, i));
                 if (!hasVar(sym))
-                    variables.push_back(sym);
+                    variables.push_back(Variable{sym});
                 break;
             }
             case Oper: {
@@ -94,6 +105,7 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
                         break;
                 }
                 operationStack.push(Operation{sym, i});
+                operCount++;
                 break;
             }
             case OpenBracket: {
@@ -137,8 +149,95 @@ MainWindow::SymType MainWindow::symType(char symbol) {
 
 bool MainWindow::hasVar(char var) {
     for(int i = 0; i < variables.size(); i++){
-        if (variables[i] == var)
+        if (variables[i].getSymbol() == var)
             return true;
     }
     return false;
+}
+
+bool MainWindow::check_string_for_operators(const QString &string) {
+    bool isOperator = false;
+    for (int i = 0; i < string.size(); i++){
+        char sym = string[i].toLatin1();
+        if (sym == '&' || sym == '|' || sym == '/' || sym == '+' || sym == '<' || sym == '~'){
+            if (isOperator)
+                return false;
+            isOperator = true;
+        } else if(sym != '-')
+            isOperator = false;
+    }
+    return true;
+}
+
+bool MainWindow::check_string_for_end(const QString &string) {
+    bool hasFirstOperand = false, isOper = false;
+    for (int i = 0; i < string.size(); i++){
+        char sym = string[i].toLatin1();
+        switch (symType(sym)) {
+            case Oper:{
+                if (sym != '-'){
+                    if (!hasFirstOperand){
+                        return false;
+                    } else {
+                        hasFirstOperand = false;
+                    }
+                }
+                isOper = true;
+                break;
+            }
+            case OpenBracket:{
+                isOper = false;
+                hasFirstOperand = false;
+                break;
+            }
+            case CloseBracket:{
+                if(isOper){
+                    return false;
+                }
+                hasFirstOperand = true;
+                break;
+            }
+            default:{
+                if (hasFirstOperand)
+                    return false;
+                hasFirstOperand = true;
+                isOper = false;
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+void MainWindow::evaluate_expression(const QString &expression) {
+    for(unsigned int i = power_of_2(variables.size()) - 1; i >= 0; i--){
+        for(int j = 0; j < variables.size(); j++){
+            variables[j].value = (1u << variables.size() - (j + 1)) & i;
+        }
+
+    }
+}
+
+unsigned int MainWindow::power_of_2(unsigned int pow) {
+    unsigned int result = 1;
+    for (int i = 0; i < pow; i++){
+        result *= 2u;
+    }
+    return result;
+}
+
+QString MainWindow::change_var_to_value(QString expression) {
+    for(int i = 0; i < expression.length(); i++){
+        if(symType(expression[i].toLatin1()) == MainWindow::SymType::Var){
+            expression[i] = QChar(value_of_var(expression[i]));
+        }
+    }
+    return QString();
+}
+
+bool MainWindow::value_of_var(char var) {
+    for (int i = 0; i < variables.size(); i++){
+        if (var == variables[i].getSymbol())
+            return variables[i].value;
+    }
 }

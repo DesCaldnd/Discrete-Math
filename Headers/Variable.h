@@ -23,6 +23,9 @@ public:
     Variable(char);
 
     Variable(char, int);
+
+    bool value;
+
 };
 
 

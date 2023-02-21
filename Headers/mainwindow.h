@@ -30,19 +30,31 @@ private:
 
     bool check_string_for_operators(const QString&);
 
+    bool check_string_for_end(const QString&);
+
     std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
+
+    void evaluate_expression(const QString&);
 
     bool hasVar(char);
 
+    unsigned int power_of_2(unsigned int);
+
+    QString change_var_to_value(QString);
+
+    bool value_of_var(char);
+
     QMessageBox errorMessageBox{this};
 
-    std::vector<char> variables{};
+    std::vector<Variable> variables{};
 
     enum SymType{
         Var, Oper, OpenBracket, CloseBracket, Constant
     };
 
     SymType symType(char);
+
+    int operCount = 0;
 
 private slots:
 
