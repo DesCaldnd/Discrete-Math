@@ -13,6 +13,8 @@ class Operation : public ExpressionSymbol{
 
     void setIndex(int) override;
 
+    static int order(char);
+
     static const std::vector<proxy> ORDER_LIST;
 
 public:
@@ -20,7 +22,11 @@ public:
 
     char getSymbol() override;
 
+    int getOrder();
+
     Operation(char);
+
+    Operation(char, int);
 };
 
 

@@ -17,6 +17,9 @@ protected:
     virtual void setIndex(int) =0;
 
 public:
+
+    int position = 0;
+
     virtual void setSymbol(char) =0;
 
     virtual char getSymbol() = 0;

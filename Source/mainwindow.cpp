@@ -65,11 +65,10 @@ std::vector<ExpressionSymbol> MainWindow::expr_to_postfix(const QString &string)
     variables.clear();
 
     std::vector<ExpressionSymbol> answer;
-    answer.reserve(string.length());
     std::stack<Operation> operationStack;
 
     for (int i = 0; i < string.length(); i++){
-        char sym = string[i];
+        char sym = string[i].toLatin1();
         switch (symType(sym)) {
             case Var:
                 answer.push_back(Variable(sym, i));
@@ -77,13 +76,22 @@ std::vector<ExpressionSymbol> MainWindow::expr_to_postfix(const QString &string)
                     variables.push_back(sym);
                 break;
             case Oper:
-
+                    int order = Operation::order(sym);
+                    while (operationStack.top().getOrder() > order && operationStack.size() != 0){
+                        answer.push_back(operationStack.top());
+                        operationStack.pop();
+                    }
+                    operationStack.push(Operation{sym, i});
                 break;
             case OpenBracket:
-
+                    operationStack.push(Operation{sym});
                 break;
             case CloseBracket:
-
+                while (operationStack.top().getSymbol() != '('){
+                    answer.push_back(operationStack.top());
+                    operationStack.pop();
+                }
+                operationStack.pop();
                 break;
         }
     }

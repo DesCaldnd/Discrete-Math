@@ -24,9 +24,9 @@ Variable::Variable(char symbol) {
     setSymbol(symbol);
 }
 
-Variable::Variable(char symbol, int index) {
+Variable::Variable(char symbol, int position) {
     setSymbol(symbol);
-    setIndex(index);
+    position = position;
 }
 
 int Variable::getIndex() {

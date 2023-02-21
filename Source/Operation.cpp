@@ -33,3 +33,20 @@ char Operation::getSymbol() {
 Operation::Operation(char oper) {
     setSymbol(oper);
 }
+
+int Operation::order(char oper) {
+    for (int i = 0; i < ORDER_LIST.size(); i++){
+        if(ORDER_LIST[i].symbol == oper)
+            return ORDER_LIST[i].index;
+    }
+    return -2;
+}
+
+int Operation::getOrder() {
+    return data.index;
+}
+
+Operation::Operation(char sym, int pos) {
+    setSymbol(sym);
+    position = pos;
+}
