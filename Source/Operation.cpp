@@ -3,28 +3,33 @@
 //
 
 #include "../Headers/Operation.h"
+#include <stdexcept>
 
-const std::vector<Operation::proxy> Operation::ORDER_LIST =  {{'&', 4}, {'|', 3}, {'<', 2}, {'\\', 5}, {'+', 0}, {'~', 1}, {'-', 6}};
+const std::vector<Operation::proxy> Operation::ORDER_LIST =  {{'&', 4}, {'|', 3}, {'<', 2}, {'\\', 5}, {'+', 0}, {'~', 1}, {'-', 6}, {'(', -1}, {')', -1},};
 
-void Operation::setOrder() {
+void Operation::setIndex(int index = 0) {
     int ord;
     for(int i = 0; i < ORDER_LIST.size(); i++){
-        if (data.operation == ORDER_LIST[i].operation){
-            data.order = ORDER_LIST[i].order;
+        if (data.symbol == ORDER_LIST[i].symbol){
+            data.index = ORDER_LIST[i].index;
             break;
         }
     }
 }
 
-void Operation::setOperation(char oper) {
-    data.operation = oper;
-    setOrder();
+void Operation::setSymbol(char oper) {
+    if (oper == '&' || oper == '|' || oper == '<' || oper == '\\' || oper == '+' || oper == '~' || oper == '-' || oper == '(' || oper == ')'){
+        data.symbol = oper;
+        setIndex();
+    } else
+        throw std::runtime_error(std::string("Not valid symbol"));
+
 }
 
-char Operation::getOperation() {
-    return data.operation;
+char Operation::getSymbol() {
+    return data.symbol;
 }
 
 Operation::Operation(char oper) {
-    setOperation(oper);
+    setSymbol(oper);
 }

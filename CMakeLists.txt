@@ -14,7 +14,7 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-add_executable(DiscreteMath main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h)
+add_executable(DiscreteMath main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h)
 target_link_libraries(DiscreteMath
         Qt::Core
         Qt::Gui

@@ -8,6 +8,8 @@
 #include <QMainWindow>
 #include <QString>
 #include <QMessageBox>
+#include <vector>
+#include "Variable.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,9 +28,19 @@ private:
 
     bool check_string_for_brackets(const QString&);
 
-    QString expr_to_postfix(const QString&);
+    std::vector<ExpressionSymbol> expr_to_postfix(const QString&);
+
+    bool hasVar(char);
 
     QMessageBox errorMessageBox{this};
+
+    std::vector<char> variables{};
+
+    enum SymType{
+        Var, Oper, OpenBracket, CloseBracket
+    };
+
+    SymType symType(char);
 
 private slots:
 

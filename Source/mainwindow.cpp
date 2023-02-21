@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <stack>
 #include "../Headers/Operation.h"
+#include "../Headers/Variable.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -60,9 +61,50 @@ bool MainWindow::check_string_for_brackets(const QString &string) {
     return false;
 }
 
-QString MainWindow::expr_to_postfix(const QString &string) {
-    QString answer;
-    answer.resize(string.length());
+std::vector<ExpressionSymbol> MainWindow::expr_to_postfix(const QString &string) {
+    variables.clear();
+
+    std::vector<ExpressionSymbol> answer;
+    answer.reserve(string.length());
     std::stack<Operation> operationStack;
-    return QString();
+
+    for (int i = 0; i < string.length(); i++){
+        char sym = string[i];
+        switch (symType(sym)) {
+            case Var:
+                answer.push_back(Variable(sym, i));
+                if (!hasVar(sym))
+                    variables.push_back(sym);
+                break;
+            case Oper:
+
+                break;
+            case OpenBracket:
+
+                break;
+            case CloseBracket:
+
+                break;
+        }
+    }
+
+    return answer;
+}
+
+MainWindow::SymType MainWindow::symType(char symbol) {
+    if((symbol >= 'A' && symbol <= 'Z') || (symbol >= 'a' && symbol <= 'z'))
+        return MainWindow::SymType::Var;
+    else if (symbol == '(')
+        return MainWindow::SymType::OpenBracket;
+    else if (symbol == ')')
+        return MainWindow::SymType ::CloseBracket;
+    return MainWindow::SymType::Oper;
+}
+
+bool MainWindow::hasVar(char var) {
+    for(int i = 0; i < variables.size(); i++){
+        if (variables[i] == var)
+            return true;
+    }
+    return false;
 }

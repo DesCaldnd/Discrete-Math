@@ -6,23 +6,19 @@
 #define DISCRETEMATH_OPERATION_H
 
 #include <vector>
+#include "ExpressionSymbol.h"
 
-class Operation {
-
-    struct proxy{
-        char operation;
-        int order;
-    };
+class Operation : public ExpressionSymbol{
     proxy data;
 
-    void setOrder();
+    void setIndex(int) override;
 
     static const std::vector<proxy> ORDER_LIST;
 
 public:
-    void setOperation(char);
+    void setSymbol(char) override;
 
-    char getOperation();
+    char getSymbol() override;
 
     Operation(char);
 };
