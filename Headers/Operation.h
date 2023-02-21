@@ -9,7 +9,6 @@
 #include "ExpressionSymbol.h"
 
 class Operation : public ExpressionSymbol{
-    proxy data;
 
     void setIndex(int) override;
 

@@ -60,6 +60,7 @@ void MainWindow::eval_button_clicked() {
         x.append(expression[i]->getSymbol());
     }
     qDebug() << x;
+    evaluate_expression(expression);
 }
 
 bool MainWindow::check_string_for_brackets(const QString &string) {
@@ -230,7 +231,7 @@ void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression) 
                     exprStack.pop();
                     auto first_val = exprStack.top();
                     exprStack.pop();
-                    exprStack.push(new Variable(calc_value(*first_val, *second_val, *var_expression[i])));
+                    exprStack.push(new Variable(calc_value(*dynamic_cast<Variable*>(first_val) , *dynamic_cast<Variable*>(second_val), *dynamic_cast<Operation*>(var_expression[i]))));
                 }
             }
         }
@@ -246,13 +247,13 @@ unsigned int MainWindow::power_of_2(unsigned int pow) {
     return result;
 }
 
-std::vector<ExpressionSymbol*> MainWindow::change_var_to_value(std::vector<ExpressionSymbol*> expression) {
+std::vector<ExpressionSymbol*> MainWindow::change_var_to_value(std::vector<ExpressionSymbol*> &expression) {
     for(int i = 0; i < expression.size(); i++){
         if(symType(expression[i]->getSymbol()) == MainWindow::SymType::Var){
             expression[i]->value = value_of_var(expression[i]->getSymbol());
         }
     }
-    return QString();
+    return expression;
 }
 
 bool MainWindow::value_of_var(char var) {
@@ -260,6 +261,7 @@ bool MainWindow::value_of_var(char var) {
         if (var == variables[i].getSymbol())
             return variables[i].value;
     }
+    return false;
 }
 
 Variable MainWindow::calc_value(Variable first_var, Variable second_var, Operation oper) {

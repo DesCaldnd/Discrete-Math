@@ -35,13 +35,13 @@ private:
 
     std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
 
-    void evaluate_expression(const QString&);
+    void evaluate_expression(std::vector<ExpressionSymbol*>);
 
     bool hasVar(char);
 
     unsigned int power_of_2(unsigned int);
 
-    std::vector<ExpressionSymbol*> change_var_to_value(std::vector<ExpressionSymbol*>);
+    std::vector<ExpressionSymbol*> change_var_to_value(std::vector<ExpressionSymbol*>&);
 
     bool value_of_var(char);
 

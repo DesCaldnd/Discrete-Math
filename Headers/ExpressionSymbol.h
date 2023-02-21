@@ -10,11 +10,11 @@ class ExpressionSymbol {
 
 protected:
     struct proxy{
-        char symbol;
+        char symbol = '2';
         int index = -1;
     };
 
-
+    proxy data;
 
     virtual void setIndex(int) =0;
 
@@ -26,7 +26,7 @@ public:
 
     bool value = 0;
 
-    int positionOfStart = 0, positionOfEnd;
+    int positionOfStart = 0, positionOfEnd = 0;
 
     virtual void setSymbol(char) =0;
 
