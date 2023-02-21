@@ -10,14 +10,14 @@ void Variable::setIndex(int index) {
 }
 
 void Variable::setSymbol(char symbol) {
-    if ((symbol >= 'A' && symbol <= 'Z') || (symbol >= 'a' && symbol <= 'z')){
+    if ((symbol >= 'A' && symbol <= 'Z') || (symbol >= 'a' && symbol <= 'z') || symbol >= '1' || symbol >= '0'){
         data.symbol = symbol;
     } else
         throw std::runtime_error(std::string("Not valid symbol"));
 }
 
 char Variable::getSymbol() {
-    return 0;
+    return data.symbol;
 }
 
 Variable::Variable(char symbol) {

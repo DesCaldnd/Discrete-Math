@@ -5,20 +5,14 @@
 #include "../Headers/Operation.h"
 #include <stdexcept>
 
-const std::vector<Operation::proxy> Operation::ORDER_LIST =  {{'&', 4}, {'|', 3}, {'<', 2}, {'\\', 5}, {'+', 0}, {'~', 1}, {'-', 6}, {'(', -1}, {')', -1},};
+const std::vector<Operation::proxy> Operation::ORDER_LIST =  {{'&', 4}, {'|', 3}, {'<', 2}, {'/', 5}, {'+', 0}, {'~', 1}, {'-', 6}, {'(', -1}, {')', -1},};
 
 void Operation::setIndex(int index = 0) {
-    int ord;
-    for(int i = 0; i < ORDER_LIST.size(); i++){
-        if (data.symbol == ORDER_LIST[i].symbol){
-            data.index = ORDER_LIST[i].index;
-            break;
-        }
-    }
+    data.index = order(data.symbol);
 }
 
 void Operation::setSymbol(char oper) {
-    if (oper == '&' || oper == '|' || oper == '<' || oper == '\\' || oper == '+' || oper == '~' || oper == '-' || oper == '(' || oper == ')'){
+    if (oper == '&' || oper == '|' || oper == '<' || oper == '/' || oper == '+' || oper == '~' || oper == '-' || oper == '(' || oper == ')'){
         data.symbol = oper;
         setIndex();
     } else

@@ -17,8 +17,8 @@
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    setMinimumSize(800, 450);
-    QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"^([-]?[\(]{1})*[-]?[a-zA-Z10]?(([&|+<\\~])([-]?[\(]{1})*([-]?[a-zA-Z10]?)([\)]{1})*)*$"}, this};
+    setMinimumSize(950, 500);
+    QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"^([-]?[\(]{1})*[-]?[a-zA-Z10]?(([&|+</~])([-]?[\(]{1})*([-]?[a-zA-Z10]?)([\)]{1})*)*$"}, this};
 //    ^[-]?[\(]*[-]?[a-zA-Z10]?(([&|+<\\])[-]?[\(]*([-]?[a-zA-Z10]?)[\)]*)*$
     ui->expr_edit->setValidator(validator);
 
@@ -26,6 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->expr_edit, &QLineEdit::returnPressed, this, &MainWindow::eval_button_clicked);
 
     errorMessageBox.setWindowTitle("Error");
+    ui->answer_label->hide();
+    ui->statusbar->hide();
 }
 
 MainWindow::~MainWindow() {
@@ -44,6 +46,12 @@ void MainWindow::eval_button_clicked() {
         errorMessageBox.exec();
         return;
     }
+    auto expression = expr_to_postfix(string);
+    QString x;
+    for(int i = 0; i < expression.size(); i++){
+        x.append(expression[i]->getSymbol());
+    }
+    qDebug() << x;
 }
 
 bool MainWindow::check_string_for_brackets(const QString &string) {
@@ -61,39 +69,55 @@ bool MainWindow::check_string_for_brackets(const QString &string) {
     return false;
 }
 
-std::vector<ExpressionSymbol> MainWindow::expr_to_postfix(const QString &string) {
+std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string) {
     variables.clear();
 
-    std::vector<ExpressionSymbol> answer;
+    std::vector<ExpressionSymbol*> answer;
     std::stack<Operation> operationStack;
 
     for (int i = 0; i < string.length(); i++){
         char sym = string[i].toLatin1();
         switch (symType(sym)) {
-            case Var:
-                answer.push_back(Variable(sym, i));
+            case Var: {
+                answer.push_back(new Variable(sym, i));
                 if (!hasVar(sym))
                     variables.push_back(sym);
                 break;
-            case Oper:
-                    int order = Operation::order(sym);
-                    while (operationStack.top().getOrder() > order && operationStack.size() != 0){
-                        answer.push_back(operationStack.top());
+            }
+            case Oper: {
+                int order = Operation::order(sym);
+                while (operationStack.size() != 0) {
+                    if (operationStack.top().getOrder() > order) {
+                        answer.push_back(new Operation(operationStack.top()));
                         operationStack.pop();
-                    }
-                    operationStack.push(Operation{sym, i});
+                    } else
+                        break;
+                }
+                operationStack.push(Operation{sym, i});
                 break;
-            case OpenBracket:
-                    operationStack.push(Operation{sym});
+            }
+            case OpenBracket: {
+                operationStack.push(Operation{sym});
                 break;
-            case CloseBracket:
-                while (operationStack.top().getSymbol() != '('){
-                    answer.push_back(operationStack.top());
+            }
+            case CloseBracket: {
+                while (operationStack.top().getSymbol() != '(') {
+                    answer.push_back(new Operation(operationStack.top()));
                     operationStack.pop();
                 }
                 operationStack.pop();
                 break;
+            }
+            case Constant: {
+                answer.push_back(new Variable(sym, i));
+                break;
+            }
         }
+    }
+
+    while (operationStack.size() != 0) {
+        answer.push_back(new Operation(operationStack.top()));
+        operationStack.pop();
     }
 
     return answer;
@@ -106,6 +130,8 @@ MainWindow::SymType MainWindow::symType(char symbol) {
         return MainWindow::SymType::OpenBracket;
     else if (symbol == ')')
         return MainWindow::SymType ::CloseBracket;
+    else if (symbol == '1' || symbol == '0')
+        return MainWindow::SymType::Constant;
     return MainWindow::SymType::Oper;
 }
 

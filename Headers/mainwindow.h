@@ -28,7 +28,7 @@ private:
 
     bool check_string_for_brackets(const QString&);
 
-    std::vector<ExpressionSymbol> expr_to_postfix(const QString&);
+    std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
 
     bool hasVar(char);
 
@@ -37,7 +37,7 @@ private:
     std::vector<char> variables{};
 
     enum SymType{
-        Var, Oper, OpenBracket, CloseBracket
+        Var, Oper, OpenBracket, CloseBracket, Constant
     };
 
     SymType symType(char);

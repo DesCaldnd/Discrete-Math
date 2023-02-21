@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>450</height>
+    <width>950</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -67,7 +67,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>950</width>
      <height>20</height>
     </rect>
    </property>
@@ -89,6 +89,7 @@
     <addaction name="actionImplication"/>
     <addaction name="actionEquivalent"/>
     <addaction name="actionSymmetric_Complement"/>
+    <addaction name="actionRealative_Complement"/>
     <addaction name="separator"/>
     <addaction name="actionOpen_Bracket"/>
     <addaction name="actionClose_Bracket"/>
@@ -122,6 +123,7 @@
    <addaction name="actionImplication"/>
    <addaction name="actionEquivalent"/>
    <addaction name="actionSymmetric_Complement"/>
+   <addaction name="actionRealative_Complement"/>
    <addaction name="separator"/>
    <addaction name="actionOpen_Bracket"/>
    <addaction name="actionClose_Bracket"/>
@@ -179,6 +181,11 @@
   <action name="actionClose_Bracket">
    <property name="text">
     <string>Close Bracket</string>
+   </property>
+  </action>
+  <action name="actionRealative_Complement">
+   <property name="text">
+    <string>Realative Complement</string>
    </property>
   </action>
  </widget>
