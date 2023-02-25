@@ -41,7 +41,7 @@
       <item>
        <widget class="QTableWidget" name="table">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>

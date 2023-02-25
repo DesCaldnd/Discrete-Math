@@ -35,21 +35,23 @@ private:
 
     std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
 
-    void evaluate_expression(std::vector<ExpressionSymbol*>);
+    void evaluate_expression(std::vector<ExpressionSymbol*>, QString);
 
     bool hasVar(char);
 
-    unsigned int power_of_2(unsigned int);
+    unsigned long long power_of_2(unsigned int);
 
     std::vector<ExpressionSymbol*> change_var_to_value(std::vector<ExpressionSymbol*>&);
 
     bool value_of_var(char);
 
-    Variable calc_value(Variable, Variable, Operation);
+    Variable calc_value(Variable, Variable, char);
 
     QMessageBox errorMessageBox{this};
 
     std::vector<Variable> variables{};
+
+    std::vector<std::vector<bool>> fAnswer;
 
     enum SymType{
         Var, Oper, OpenBracket, CloseBracket, Constant

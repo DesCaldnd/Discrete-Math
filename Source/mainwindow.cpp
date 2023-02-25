@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     setMinimumSize(950, 500);
-    QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"^([-]?[\(]{1})*[-]?[a-zA-Z10]?(([&|+</~])([-]?[\(]{1})*([-]?[a-zA-Z10]?)([\)]{1})*)*$"}, this};
+    QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"^([-]?[\(]{1})*[-]?[a-zA-Z10]?(([&|+</~])?([-]?[\(]{1})*([-]?[a-zA-Z10]?)([\)]{1})*)*$"}, this};
 //    ^[-]?[\(]*[-]?[a-zA-Z10]?(([&|+<\\])[-]?[\(]*([-]?[a-zA-Z10]?)[\)]*)*$
     ui->expr_edit->setValidator(validator);
 
@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->expr_edit, &QLineEdit::returnPressed, this, &MainWindow::eval_button_clicked);
 
     errorMessageBox.setWindowTitle("Error");
-    ui->answer_label->hide();
+//    ui->answer_label->hide();
     ui->statusbar->hide();
 }
 
@@ -55,12 +55,55 @@ void MainWindow::eval_button_clicked() {
         return;
     }
     auto expression = expr_to_postfix(string);
-    QString x;
-    for(int i = 0; i < expression.size(); i++){
-        x.append(expression[i]->getSymbol());
+//    QString x;
+//    for(int i = 0; i < expression.size(); i++){
+//        x.append(expression[i]->getSymbol());
+//    }
+//    qDebug() << x;
+    if (variables.size() > 63){
+        errorMessageBox.setText("Too many variables (max=63)");
+        errorMessageBox.exec();
+        return;
     }
-    qDebug() << x;
-    evaluate_expression(expression);
+    evaluate_expression(expression, string);
+
+    bool isAllTrue = true, isAllFalse = true;
+    for (int i = 0; i < fAnswer.size(); i++){
+        bool x = fAnswer[i][fAnswer[i].size()-1];
+        if(!x)
+            isAllTrue = false;
+        else
+            isAllFalse = false;
+        if (!(isAllTrue || isAllFalse))
+            break;
+    }
+    if (isAllTrue){
+        ui->answer_label->setText("This expression is absolute true");
+    } else if(isAllFalse){
+        ui->answer_label->setText("This expression is absolute false");
+    } else{
+        QString answer("This expression is false at (");
+        for (int i = 0; i < variables.size(); i++){
+            if (i != 0)
+                answer.append(", ");
+            answer.append(QString(variables[i].getSymbol()));
+        }
+        answer.append("):");
+        for(int i = 0; i < fAnswer.size(); i++){
+            if (!fAnswer[i][fAnswer[i].size()-1]){
+                answer.append(" (");
+                for(int j = 0; j < variables.size(); j++){
+                    if(j != 0)
+                        answer.append(", ");
+                    answer.append(QString::number(fAnswer[i][j]));
+                }
+                if(fAnswer[i].size() == variables.size())
+                    answer.append("0");
+                answer.append(")");
+            }
+        }
+        ui->answer_label->setText(answer);
+    }
 }
 
 bool MainWindow::check_string_for_brackets(const QString &string) {
@@ -95,6 +138,7 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
                 break;
             }
             case Oper: {
+                operCount++;
                 int order = Operation::order(sym);
                 while (operationStack.size() != 0) {
                     if (operationStack.top().getOrder() > order) {
@@ -104,7 +148,6 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
                         break;
                 }
                 operationStack.push(Operation{sym, i});
-                operCount++;
                 break;
             }
             case OpenBracket: {
@@ -209,38 +252,71 @@ bool MainWindow::check_string_for_end(const QString &string) {
     return true;
 }
 
-void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression) {
+void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression, QString string) {
+    fAnswer.clear();
     ui->table->clear();
-    ui->table->setRowCount(power_of_2(variables.size()));
-    ui->table->setColumnCount(variables.size() + 1);
-    for(unsigned int i = power_of_2(variables.size()) - 1; i >= 0; i--){
+    unsigned long long vars_2 = power_of_2(variables.size());
+    ui->table->setRowCount(vars_2);
+    ui->table->setColumnCount(variables.size() + operCount);
+    QStringList labels;
+    bool isFirst = true;
+    for(unsigned long long i = vars_2; i > 0; i--){
+        fAnswer.push_back(std::vector<bool>());
+        int opers = 0;
         for(int j = 0; j < variables.size(); j++){
-            variables[j].value = (1u << variables.size() - (j + 1)) & i;
-            ui->table->setItem((power_of_2(variables.size()) - 1) - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
+            variables[j].value = (1ULL << variables.size() - (j + 1)) & (i - 1);
+            if (isFirst)
+                labels << QString(variables[j].getSymbol());
+            ui->table->setItem(vars_2 - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
+            fAnswer[vars_2 - i].push_back(variables[j].value);
         }
         auto var_expression = change_var_to_value(expression);
         std::stack<ExpressionSymbol*> exprStack;
         for (int j = 0; j < var_expression.size(); j++){
             if(var_expression[j]->getType() == ExpressionSymbol::Type::Var){
-                exprStack.push(var_expression[i]);
+                exprStack.push(var_expression[j]);
             } else{
-                if(var_expression[i]->getSymbol() == '-'){
-                    exprStack.top()->value = !exprStack.top()->value;
-                } else{
+                Variable result('A');
+                if(var_expression[j]->getSymbol() == '-'){
+                    result = *dynamic_cast<Variable*>(exprStack.top());
+                    result.positionOfStart--;
+                    exprStack.pop();
+                    result.value = !result.value;
+                } else {
                     auto second_val = exprStack.top();
                     exprStack.pop();
                     auto first_val = exprStack.top();
                     exprStack.pop();
-                    exprStack.push(new Variable(calc_value(*dynamic_cast<Variable*>(first_val) , *dynamic_cast<Variable*>(second_val), *dynamic_cast<Operation*>(var_expression[i]))));
+                    result = calc_value(*dynamic_cast<Variable *>(first_val), *dynamic_cast<Variable *>(second_val),
+                                        expression[j]->getSymbol());
                 }
+                    ui->table->setItem(vars_2 - i, variables.size() + opers,
+                                   new QTableWidgetItem(QString::number(result.value)));
+                    if (isFirst){
+                        while (result.positionOfStart > 0 && result.positionOfEnd < string.length() - 1){
+                            if (string[result.positionOfStart - 1].toLatin1() == '(' && string[result.positionOfEnd + 1].toLatin1() == ')'){
+                                result.positionOfStart--;
+                                result.positionOfEnd++;
+                            } else
+                                break;
+                        }
+                        labels << string.mid(result.positionOfStart, result.positionOfEnd - result.positionOfStart + 1);
+                    }
+                    exprStack.push(new Variable(result));
+                fAnswer[vars_2 - i].push_back(result.value);
+                opers++;
             }
         }
-        ui->table->setItem((power_of_2(variables.size()) - 1) - i, ui->table->columnCount() - 1, new QTableWidgetItem(QString::number(exprStack.top()->value)));
+//        ui->table->setItem(vars_2 - i, ui->table->columnCount() - 1, new QTableWidgetItem(QString::number(exprStack.top()->value)));
+        if (isFirst)
+            ui->table->setHorizontalHeaderLabels(labels);
+        isFirst = false;
     }
+    ui->table->resizeColumnsToContents();
 }
 
-unsigned int MainWindow::power_of_2(unsigned int pow) {
-    unsigned int result = 1;
+unsigned long long MainWindow::power_of_2(unsigned int pow) {
+    unsigned long long result = 1;
     for (int i = 0; i < pow; i++){
         result *= 2u;
     }
@@ -264,11 +340,11 @@ bool MainWindow::value_of_var(char var) {
     return false;
 }
 
-Variable MainWindow::calc_value(Variable first_var, Variable second_var, Operation oper) {
+Variable MainWindow::calc_value(Variable first_var, Variable second_var, char oper) {
     Variable result{'1', first_var.positionOfStart};
     result.positionOfEnd = second_var.positionOfEnd;
     bool f = first_var.value, s = second_var.value;
-    switch (oper.getSymbol()){
+    switch (oper){
         case '&':{
             f = f && s;
             break;
