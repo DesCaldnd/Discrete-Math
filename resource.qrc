@@ -19,4 +19,7 @@
         <file>images/File.png</file>
         <file>images/Negative.png</file>
     </qresource>
+    <qresource prefix="/style">
+        <file>Diffnes.qss</file>
+    </qresource>
 </RCC>

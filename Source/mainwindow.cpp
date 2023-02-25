@@ -10,6 +10,10 @@
 #include <QPushButton>
 #include <QDebug>
 #include <stack>
+#include <iomanip>
+#include <iostream>
+#include <fstream>
+#include <QFileDialog>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -38,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionC, &QAction::triggered, [&](){ action_insert('C'); });
     connect(ui->actionBackspace, &QAction::triggered, this, &MainWindow::action_backspace);
     connect(ui->actionDeveloper, &QAction::triggered, this, &MainWindow::action_developer);
+    connect(ui->actionSave_Table, &QAction::triggered, this, &MainWindow::action_file);
 
 
     errorMessageBox.setWindowTitle("Error");
@@ -283,7 +288,7 @@ void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
     unsigned long long vars_2 = power_of_2(variables.size());
     ui->table->setRowCount(vars_2);
     ui->table->setColumnCount(variables.size() + operCount);
-    QStringList labels;
+    labels.clear();
     bool isFirst = true;
     for(unsigned long long i = vars_2; i > 0; i--){
         fAnswer.push_back(std::vector<bool>());
@@ -422,4 +427,39 @@ void MainWindow::action_backspace() {
 
 void MainWindow::action_developer() {
     dev.show();
+}
+
+void MainWindow::action_file() {
+    if(ui->table->rowCount() == 0 || ui->table->columnCount() == 0) {
+        errorMessageBox.setText("Table is empty");
+        errorMessageBox.exec();
+        return;
+    }
+    QString path = QFileDialog::getSaveFileName(this,  tr("Save Table"), "/home/jana/untitled.csv", tr("Exel table (*.csv)"));
+
+    std::ofstream outData(path.toStdString(), std::ios::out | std::ios::trunc);
+    if (!outData.is_open()) {
+        errorMessageBox.setText("Error during file open");
+        errorMessageBox.exec();
+        return;
+    }
+    outData << "0;";
+    for (int i = 0; i < labels.size(); i++){
+        outData << labels[i].toStdString() << ';';
+    }
+    outData << std::endl;
+    int size = fAnswer.size();
+    for (int i = 0; i < size; i++){
+        int size_2 = fAnswer[i].size();
+        for(int j = -1; j < size_2; j++){
+            if(j == -1)
+                outData << i + 1;
+            else {
+                outData << fAnswer[i][j];
+            }
+            outData << ';';
+        }
+        outData << std::endl;
+    }
+    outData.close();
 }

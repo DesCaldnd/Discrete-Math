@@ -55,6 +55,8 @@ private:
 
     std::vector<std::vector<bool>> fAnswer;
 
+    QStringList labels;
+
     enum SymType{
         Var, Oper, OpenBracket, CloseBracket, Constant
     };
@@ -76,6 +78,8 @@ private slots:
     void action_backspace();
 
     void action_developer();
+
+    void action_file();
 };
 
 
