@@ -15,13 +15,29 @@
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    setMinimumSize(950, 500);
-    QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"^([-]?[\(]{1})*[-]?[a-zA-Z10]?(([&|+</~])?([-]?[\(]{1})*([-]?[a-zA-Z10]?)([\)]{1})*)*$"}, this};
+    setMinimumSize(1070, 550);
+    QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/]*"}, this};
 //    ^[-]?[\(]*[-]?[a-zA-Z10]?(([&|+<\\])[-]?[\(]*([-]?[a-zA-Z10]?)[\)]*)*$
     ui->expr_edit->setValidator(validator);
 
     connect(ui->eval_button, &QPushButton::clicked, this, &MainWindow::eval_button_clicked);
     connect(ui->expr_edit, &QLineEdit::returnPressed, this, &MainWindow::eval_button_clicked);
+
+    connect(ui->actionClear_expression, &QAction::triggered, this, &MainWindow::action_clear_expression);
+    connect(ui->actionNegative, &QAction::triggered, [&](){ action_insert('-'); });
+    connect(ui->actionConjunction, &QAction::triggered, [&](){ action_insert('&'); });
+    connect(ui->actionDisjunction, &QAction::triggered, [&](){ action_insert('|'); });
+    connect(ui->actionImplication, &QAction::triggered, [&](){ action_insert('<'); });
+    connect(ui->actionEquivalent, &QAction::triggered, [&](){ action_insert('~'); });
+    connect(ui->actionSymmetric_Complement, &QAction::triggered, [&](){ action_insert('+'); });
+    connect(ui->actionRealative_Complement, &QAction::triggered, [&](){ action_insert('/'); });
+    connect(ui->actionOpen_Bracket, &QAction::triggered, [&](){ action_insert('('); });
+    connect(ui->actionClose_Bracket, &QAction::triggered, [&](){ action_insert(')'); });
+    connect(ui->actionA, &QAction::triggered, [&](){ action_insert('A'); });
+    connect(ui->actionB, &QAction::triggered, [&](){ action_insert('B'); });
+    connect(ui->actionC, &QAction::triggered, [&](){ action_insert('C'); });
+    connect(ui->actionBackspace, &QAction::triggered, this, &MainWindow::action_backspace);
+
 
     errorMessageBox.setWindowTitle("Error");
 //    ui->answer_label->hide();
@@ -91,6 +107,8 @@ void MainWindow::eval_button_clicked() {
         answer.append("):");
         for(int i = 0; i < fAnswer.size(); i++){
             if (!fAnswer[i][fAnswer[i].size()-1]){
+                if(i != 0)
+                    answer.append(',');
                 answer.append(" (");
                 for(int j = 0; j < variables.size(); j++){
                     if(j != 0)
@@ -199,17 +217,23 @@ bool MainWindow::hasVar(char var) {
 }
 
 bool MainWindow::check_string_for_operators(const QString &string) {
-    bool isOperator = false;
+    bool isOperator = false, isMinus = false;
     for (int i = 0; i < string.size(); i++){
         char sym = string[i].toLatin1();
         if (sym == '&' || sym == '|' || sym == '/' || sym == '+' || sym == '<' || sym == '~'){
             if (isOperator)
                 return false;
             isOperator = true;
-        } else if(sym != '-')
+        } else if(sym != '-') {
             isOperator = false;
+            isMinus = false;
+        } else{
+            if (isMinus)
+                return false;
+            isMinus = true;
+        }
     }
-    return true;
+    return !(isMinus || isOperator);
 }
 
 bool MainWindow::check_string_for_end(const QString &string) {
@@ -372,4 +396,25 @@ Variable MainWindow::calc_value(Variable first_var, Variable second_var, char op
     }
     result.value = f;
     return result;
+}
+
+void MainWindow::action_clear_expression() {
+    ui->expr_edit->setText("");
+}
+
+void MainWindow::action_insert(char sym) {
+    int pos = ui->expr_edit->cursorPosition();
+    ui->expr_edit->setText(ui->expr_edit->text().insert(pos, sym));
+    ui->expr_edit->setCursorPosition(pos + 1);
+}
+
+void MainWindow::action_backspace() {
+    int pos = ui->expr_edit->cursorPosition();
+    if (pos == 0)
+        return;
+    QString result, string = ui->expr_edit->text();
+    result.append(string.left(pos-1));
+    result.append(string.right(string.length() - pos));
+    ui->expr_edit->setText(result);
+    ui->expr_edit->setCursorPosition(pos - 1);
 }

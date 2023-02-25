@@ -65,7 +65,11 @@ private slots:
 
     void eval_button_clicked();
 
+    void action_clear_expression();
 
+    void action_insert(char);
+
+    void action_backspace();
 };
 
 
