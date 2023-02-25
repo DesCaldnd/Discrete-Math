@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/icon.png</file>
+        <file>images/A.png</file>
+        <file>images/B.png</file>
+        <file>images/Backspace.png</file>
+        <file>images/C.png</file>
+        <file>images/Clear.png</file>
+        <file>images/CloseBracket.png</file>
+        <file>images/Conjunction.png</file>
+        <file>images/Disjunction.png</file>
+        <file>images/Equivalent.png</file>
+        <file>images/icon.ico</file>
+        <file>images/Implication.png</file>
+        <file>images/OpenBracket.png</file>
+        <file>images/RealativeComplement.png</file>
+        <file>images/SymmentircComplement.png</file>
+        <file>images/About.png</file>
+        <file>images/File.png</file>
+        <file>images/Negative.png</file>
+    </qresource>
+</RCC>

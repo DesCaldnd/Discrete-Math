@@ -145,71 +145,141 @@
    <addaction name="actionBackspace"/>
   </widget>
   <action name="actionSave_Table">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/File.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Save Table</string>
    </property>
   </action>
   <action name="actionDeveloper">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/About.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Developer</string>
    </property>
   </action>
   <action name="actionClear_expression">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Clear.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Clear expression</string>
    </property>
   </action>
   <action name="actionDisjunction">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Disjunction.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Disjunction</string>
    </property>
   </action>
   <action name="actionConjunction">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Conjunction.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Conjunction</string>
    </property>
   </action>
   <action name="actionImplication">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Implication.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Implication</string>
    </property>
   </action>
   <action name="actionNegative">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Negative.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Negative</string>
    </property>
   </action>
   <action name="actionEquivalent">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Equivalent.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Equivalent</string>
    </property>
   </action>
   <action name="actionSymmetric_Complement">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/SymmentircComplement.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Symmetric Complement</string>
    </property>
   </action>
   <action name="actionOpen_Bracket">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/OpenBracket.png</normaloff>
+     <normalon>:/images/RealativeComplement.png</normalon>:/images/OpenBracket.png</iconset>
+   </property>
    <property name="text">
     <string>Open Bracket</string>
    </property>
   </action>
   <action name="actionClose_Bracket">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/CloseBracket.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Close Bracket</string>
    </property>
   </action>
   <action name="actionRealative_Complement">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/RealativeComplement.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Realative Complement</string>
    </property>
   </action>
   <action name="actionBackspace">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Backspace.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Backspace</string>
    </property>
   </action>
   <action name="actionA">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/A.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>A</string>
    </property>
@@ -218,6 +288,11 @@
    </property>
   </action>
   <action name="actionB">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/B.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>B</string>
    </property>
@@ -226,6 +301,11 @@
    </property>
   </action>
   <action name="actionC">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/C.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>C</string>
    </property>
@@ -234,6 +314,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resource.qrc"/>
+ </resources>
  <connections/>
 </ui>

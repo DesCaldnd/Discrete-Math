@@ -11,6 +11,8 @@
 #include <vector>
 #include "Variable.h"
 #include "Operation.h"
+#include "developer.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -61,6 +63,8 @@ private:
 
     int operCount = 0;
 
+    Developer dev;
+
 private slots:
 
     void eval_button_clicked();
@@ -70,6 +74,8 @@ private slots:
     void action_insert(char);
 
     void action_backspace();
+
+    void action_developer();
 };
 
 

@@ -14,7 +14,9 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-add_executable(DiscreteMath main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h)
+
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/developer.cpp Headers/developer.h Source/developer.ui)
+add_executable(DiscreteMath main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS})
 target_link_libraries(DiscreteMath
         Qt::Core
         Qt::Gui

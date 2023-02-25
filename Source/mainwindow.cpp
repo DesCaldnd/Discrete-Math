@@ -15,7 +15,7 @@
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    setMinimumSize(1070, 550);
+    setMinimumSize(500, 250);
     QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/]*"}, this};
 //    ^[-]?[\(]*[-]?[a-zA-Z10]?(([&|+<\\])[-]?[\(]*([-]?[a-zA-Z10]?)[\)]*)*$
     ui->expr_edit->setValidator(validator);
@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionB, &QAction::triggered, [&](){ action_insert('B'); });
     connect(ui->actionC, &QAction::triggered, [&](){ action_insert('C'); });
     connect(ui->actionBackspace, &QAction::triggered, this, &MainWindow::action_backspace);
+    connect(ui->actionDeveloper, &QAction::triggered, this, &MainWindow::action_developer);
 
 
     errorMessageBox.setWindowTitle("Error");
@@ -417,4 +418,8 @@ void MainWindow::action_backspace() {
     result.append(string.right(string.length() - pos));
     ui->expr_edit->setText(result);
     ui->expr_edit->setCursorPosition(pos - 1);
+}
+
+void MainWindow::action_developer() {
+    dev.show();
 }
