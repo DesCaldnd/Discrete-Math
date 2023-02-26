@@ -6,6 +6,7 @@
 
 #include "../Headers/developer.h"
 #include "ui_Developer.h"
+#include <QPalette>
 
 
 Developer::Developer(QWidget *parent) :

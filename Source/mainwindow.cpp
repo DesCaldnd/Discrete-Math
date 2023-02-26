@@ -90,8 +90,8 @@ void MainWindow::eval_button_clicked() {
     evaluate_expression(expression, string);
 
     bool isAllTrue = true, isAllFalse = true;
-    for (int i = 0; i < fAnswer.size(); i++){
-        bool x = fAnswer[i][fAnswer[i].size()-1];
+    for (std::vector<bool> vector_data : fAnswer){
+        bool x = vector_data[vector_data.size()-1];
         if(!x)
             isAllTrue = false;
         else
@@ -105,25 +105,31 @@ void MainWindow::eval_button_clicked() {
         ui->answer_label->setText("This expression is absolute false");
     } else{
         QString answer("This expression is false at (");
-        for (int i = 0; i < variables.size(); i++){
-            if (i != 0)
+        bool isFirst = true;
+        for (Variable data : variables){
+            if (!isFirst) {
                 answer.append(", ");
-            answer.append(QString(variables[i].getSymbol()));
+            }
+            answer.append(QString(data.getSymbol()));
+            isFirst = false;
         }
         answer.append("):");
-        for(int i = 0; i < fAnswer.size(); i++){
-            if (!fAnswer[i][fAnswer[i].size()-1]){
-                if(i != 0)
+        isFirst = true;
+        for(std::vector<bool> vector_data : fAnswer){
+            if (!vector_data[vector_data.size()-1]){
+                if(!isFirst) {
                     answer.append(',');
+                }
                 answer.append(" (");
                 for(int j = 0; j < variables.size(); j++){
                     if(j != 0)
                         answer.append(", ");
-                    answer.append(QString::number(fAnswer[i][j]));
+                    answer.append(QString::number(vector_data[j]));
                 }
-                if(fAnswer[i].size() == variables.size())
+                if(vector_data.size() == variables.size())
                     answer.append("0");
                 answer.append(")");
+                isFirst = false;
             }
         }
         ui->answer_label->setText(answer);
@@ -132,17 +138,15 @@ void MainWindow::eval_button_clicked() {
 
 bool MainWindow::check_string_for_brackets(const QString &string) {
     int brackets = 0;
-    for (int i = 0; i < string.length(); i++){
-        if (string[i] == '(')
+    for (QChar qSym : string){
+        if (qSym == '(')
             brackets++;
-        else if (string[i] == ')')
+        else if (qSym == ')')
             brackets--;
         if (brackets < 0)
             return false;
     }
-    if (brackets == 0)
-        return true;
-    return false;
+    return brackets == 0;
 }
 
 std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string) {
@@ -152,8 +156,9 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
     std::vector<ExpressionSymbol*> answer;
     std::stack<Operation> operationStack;
 
-    for (int i = 0; i < string.length(); i++){
-        char sym = string[i].toLatin1();
+    int i = 0;
+    for (QChar qSym : string){
+        char sym = qSym.toLatin1();
         switch (symType(sym)) {
             case Var: {
                 answer.push_back(new Variable(sym, i));
@@ -192,6 +197,7 @@ std::vector<ExpressionSymbol*> MainWindow::expr_to_postfix(const QString &string
                 break;
             }
         }
+        i++;
     }
 
     while (operationStack.size() != 0) {
@@ -215,8 +221,8 @@ MainWindow::SymType MainWindow::symType(char symbol) {
 }
 
 bool MainWindow::hasVar(char var) {
-    for(int i = 0; i < variables.size(); i++){
-        if (variables[i].getSymbol() == var)
+    for(Variable data : variables){
+        if (data.getSymbol() == var)
             return true;
     }
     return false;
@@ -224,8 +230,8 @@ bool MainWindow::hasVar(char var) {
 
 bool MainWindow::check_string_for_operators(const QString &string) {
     bool isOperator = false, isMinus = false;
-    for (int i = 0; i < string.size(); i++){
-        char sym = string[i].toLatin1();
+    for (QChar qSym : string){
+        char sym = qSym.toLatin1();
         if (sym == '&' || sym == '|' || sym == '/' || sym == '+' || sym == '<' || sym == '~'){
             if (isOperator)
                 return false;
@@ -244,8 +250,8 @@ bool MainWindow::check_string_for_operators(const QString &string) {
 
 bool MainWindow::check_string_for_end(const QString &string) {
     bool hasFirstOperand = false, isOper = false;
-    for (int i = 0; i < string.size(); i++){
-        char sym = string[i].toLatin1();
+    for (QChar qSym : string){
+        char sym = qSym.toLatin1();
         switch (symType(sym)) {
             case Oper:{
                 if (sym != '-'){
@@ -300,14 +306,15 @@ void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
             ui->table->setItem(vars_2 - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
             fAnswer[vars_2 - i].push_back(variables[j].value);
         }
+//        qDebug() << QString::number(variables[0].value);
         auto var_expression = change_var_to_value(expression);
         std::stack<ExpressionSymbol*> exprStack;
-        for (int j = 0; j < var_expression.size(); j++){
-            if(var_expression[j]->getType() == ExpressionSymbol::Type::Var){
-                exprStack.push(var_expression[j]);
+        for (ExpressionSymbol *var_expr : var_expression){
+            if(var_expr->getType() == ExpressionSymbol::Type::Var){
+                exprStack.push(var_expr);
             } else{
                 Variable result('A');
-                if(var_expression[j]->getSymbol() == '-'){
+                if(var_expr->getSymbol() == '-'){
                     result = *dynamic_cast<Variable*>(exprStack.top());
                     result.positionOfStart--;
                     exprStack.pop();
@@ -318,7 +325,7 @@ void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
                     auto first_val = exprStack.top();
                     exprStack.pop();
                     result = calc_value(*dynamic_cast<Variable *>(first_val), *dynamic_cast<Variable *>(second_val),
-                                        expression[j]->getSymbol());
+                                        var_expr->getSymbol());
                 }
                     ui->table->setItem(vars_2 - i, variables.size() + opers,
                                    new QTableWidgetItem(QString::number(result.value)));
@@ -354,18 +361,18 @@ unsigned long long MainWindow::power_of_2(unsigned int pow) {
 }
 
 std::vector<ExpressionSymbol*> MainWindow::change_var_to_value(std::vector<ExpressionSymbol*> &expression) {
-    for(int i = 0; i < expression.size(); i++){
-        if(symType(expression[i]->getSymbol()) == MainWindow::SymType::Var){
-            expression[i]->value = value_of_var(expression[i]->getSymbol());
+    for(ExpressionSymbol *expr : expression){
+        if(symType(expr->getSymbol()) == MainWindow::SymType::Var){
+            expr->value = value_of_var(expr->getSymbol());
         }
     }
     return expression;
 }
 
 bool MainWindow::value_of_var(char var) {
-    for (int i = 0; i < variables.size(); i++){
-        if (var == variables[i].getSymbol())
-            return variables[i].value;
+    for (Variable data : variables){
+        if (var == data.getSymbol())
+            return data.value;
     }
     return false;
 }
@@ -435,7 +442,7 @@ void MainWindow::action_file() {
         errorMessageBox.exec();
         return;
     }
-    QString path = QFileDialog::getSaveFileName(this,  tr("Save Table"), "/home/jana/untitled.csv", tr("Exel table (*.csv)"));
+    QString path = QFileDialog::getSaveFileName(this,  tr("Save Table"), "/downloads/untitled.csv", tr("Exel table (*.csv)"));
 
     std::ofstream outData(path.toStdString(), std::ios::out | std::ios::trunc);
     if (!outData.is_open()) {
@@ -443,23 +450,19 @@ void MainWindow::action_file() {
         errorMessageBox.exec();
         return;
     }
-    outData << "0;";
-    for (int i = 0; i < labels.size(); i++){
-        outData << labels[i].toStdString() << ';';
+    outData << "Row index;";
+    for (QString data : labels){
+        outData << data.toStdString() << ';';
     }
     outData << std::endl;
-    int size = fAnswer.size();
-    for (int i = 0; i < size; i++){
-        int size_2 = fAnswer[i].size();
-        for(int j = -1; j < size_2; j++){
-            if(j == -1)
-                outData << i + 1;
-            else {
-                outData << fAnswer[i][j];
-            }
-            outData << ';';
+    int i = 1;
+    for (std::vector<bool> iter : fAnswer){
+        outData << i << ';';
+        for(bool data : iter){
+            outData << data << ';';
         }
         outData << std::endl;
+        i++;
     }
     outData.close();
 }
