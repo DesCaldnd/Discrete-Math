@@ -8,20 +8,31 @@ set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "C:/Qt/6.4.2/mingw_64/lib/cmake")
 
+set(QXlsxQt6_DIR "C://Program Files (x86)/QXlsx/lib/cmake/QXlsxQt6")
+
+
 find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
         REQUIRED)
 
+find_package(QXlsxQt6 REQUIRED) # or QXlsxQt6
+
 
 set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/developer.cpp Headers/developer.h Source/developer.ui)
-add_executable(DiscreteMath main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS})
+add_executable(DiscreteMath WIN32 main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS})
 target_link_libraries(DiscreteMath
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        QXlsx::QXlsx
         )
+
+#target_link_libraries(DiscreteMath
+#        PRIVATE QXlsx::QXlsx
+#        )
+
 
 if (WIN32)
     set(DEBUG_SUFFIX)

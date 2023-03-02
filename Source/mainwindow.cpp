@@ -14,6 +14,15 @@
 #include <iostream>
 #include <fstream>
 #include <QFileDialog>
+#include <QFileInfo>
+
+#include "xlsxdocument.h"
+#include "xlsxchartsheet.h"
+#include "xlsxcellrange.h"
+#include "xlsxchart.h"
+#include "xlsxrichstring.h"
+#include "xlsxWorkbook.h"
+//using namespace QXlsx;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -442,27 +451,53 @@ void MainWindow::action_file() {
         errorMessageBox.exec();
         return;
     }
-    QString path = QFileDialog::getSaveFileName(this,  tr("Save Table"), "/downloads/untitled.csv", tr("Exel table (*.csv)"));
+    QString path = QFileDialog::getSaveFileName(this,  tr("Save Table"), "/downloads/untitled.xlsx",
+                                                tr("Exel new table (*.xlsx);;Exel simple table (*.csv)"));
 
-    std::ofstream outData(path.toStdString(), std::ios::out | std::ios::trunc);
-    if (!outData.is_open()) {
-        errorMessageBox.setText("Error during file open");
-        errorMessageBox.exec();
-        return;
-    }
-    outData << "Row index;";
-    for (QString data : labels){
-        outData << data.toStdString() << ';';
-    }
-    outData << std::endl;
-    int i = 1;
-    for (std::vector<bool> iter : fAnswer){
-        outData << i << ';';
-        for(bool data : iter){
-            outData << data << ';';
+    QFileInfo info(path);
+
+    if (info.suffix() == "csv") {
+        std::ofstream outData(path.toStdString(), std::ios::out | std::ios::trunc);
+        if (!outData.is_open()) {
+            errorMessageBox.setText("Error during file open");
+            errorMessageBox.exec();
+            return;
+        }
+        outData << "Row index;";
+        for (QString data: labels) {
+            outData << data.toStdString() << ';';
         }
         outData << std::endl;
-        i++;
+        int i = 1;
+        for (std::vector<bool> iter: fAnswer) {
+            outData << i << ';';
+            for (bool data: iter) {
+                outData << data << ';';
+            }
+            outData << std::endl;
+            i++;
+        }
+        outData.close();
+    } else {
+        QXlsx::Document outData;
+        QVariant writeValue = QString("Row index");
+        outData.write(1, 1, writeValue);
+
+        int i = 2;
+        for (QString data: labels) {
+            outData.write(1, i, data);
+            i++;
+        }
+        i = 2;
+        for (std::vector<bool> iter: fAnswer) {
+            int j = 2;
+            outData.write(i, 1, i - 1);
+            for (bool data: iter) {
+                outData.write(i, j, static_cast<int>(data));
+                j++;
+            }
+            i++;
+        }
+        outData.saveAs(path);
     }
-    outData.close();
 }

@@ -20,6 +20,6 @@
         <file>images/Negative.png</file>
     </qresource>
     <qresource prefix="/style">
-        <file>Diffnes.qss</file>
+        <file>style/Diffnes.qss</file>
     </qresource>
 </RCC>
