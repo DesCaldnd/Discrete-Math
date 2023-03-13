@@ -8,7 +8,7 @@
 #include <vector>
 #include "ExpressionSymbol.h"
 
-class Operation : public ExpressionSymbol{
+class Operation final : public ExpressionSymbol{
 
     void setIndex(int) override;
 
@@ -20,7 +20,7 @@ public:
 
     void setSymbol(char) override;
 
-    char getSymbol() override;
+    char getSymbol() const override;
 
     ExpressionSymbol::Type getType() override;
 

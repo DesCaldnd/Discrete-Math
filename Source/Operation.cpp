@@ -20,7 +20,7 @@ void Operation::setSymbol(char oper) {
 
 }
 
-char Operation::getSymbol() {
+char Operation::getSymbol() const{
     return data.symbol;
 }
 

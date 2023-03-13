@@ -6,8 +6,9 @@
 #define DISCRETEMATH_VARIABLE_H
 
 #include "ExpressionSymbol.h"
+#include <compare>
 
-class Variable : public ExpressionSymbol{
+class Variable final : public ExpressionSymbol{
     Type type = ExpressionSymbol::Type::Var;
 
 public:
@@ -17,7 +18,7 @@ public:
 
     int getIndex();
 
-    char getSymbol() override;
+    char getSymbol() const override;
 
     Variable(char);
 
@@ -25,6 +26,9 @@ public:
 
     ExpressionSymbol::Type getType() override;
 
+	auto operator<=>(const Variable &other){
+		return this->getSymbol() <=> other.getSymbol();
+	}
 };
 
 

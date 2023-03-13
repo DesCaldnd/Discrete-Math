@@ -16,7 +16,7 @@ void Variable::setSymbol(char symbol) {
         throw std::runtime_error(std::string("Not valid symbol"));
 }
 
-char Variable::getSymbol() {
+char Variable::getSymbol() const{
     return data.symbol;
 }
 

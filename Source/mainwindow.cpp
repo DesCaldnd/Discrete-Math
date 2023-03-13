@@ -10,7 +10,7 @@
 #include <QPushButton>
 #include <QDebug>
 #include <stack>
-#include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <QFileDialog>
@@ -22,7 +22,6 @@
 #include "xlsxchart.h"
 #include "xlsxrichstring.h"
 #include "xlsxWorkbook.h"
-//using namespace QXlsx;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -30,7 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setMinimumSize(500, 250);
     QRegularExpressionValidator *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/]*"}, this};
-//    ^[-]?[\(]*[-]?[a-zA-Z10]?(([&|+<\\])[-]?[\(]*([-]?[a-zA-Z10]?)[\)]*)*$
     ui->expr_edit->setValidator(validator);
 
     connect(ui->eval_button, &QPushButton::clicked, this, &MainWindow::eval_button_clicked);
@@ -55,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     errorMessageBox.setWindowTitle("Error");
-//    ui->answer_label->hide();
     ui->statusbar->hide();
 }
 
@@ -86,18 +83,17 @@ void MainWindow::eval_button_clicked() {
         return;
     }
     auto expression = expr_to_postfix(string);
-//    QString x;
-//    for(int i = 0; i < expression.size(); i++){
-//        x.append(expression[i]->getSymbol());
-//    }
-//    qDebug() << x;
     if (variables.size() > 63){
         errorMessageBox.setText("Too many variables (max=63)");
         errorMessageBox.exec();
         return;
     }
+
+	std::sort(variables.begin(), variables.end());
+
     evaluate_expression(expression, string);
 
+	std::ostringstream answer;
     bool isAllTrue = true, isAllFalse = true;
     for (std::vector<bool> vector_data : fAnswer){
         bool x = vector_data[vector_data.size()-1];
@@ -109,40 +105,40 @@ void MainWindow::eval_button_clicked() {
             break;
     }
     if (isAllTrue){
-        ui->answer_label->setText("This expression is absolute true");
+        answer << "This expression is absolute true";
     } else if(isAllFalse){
-        ui->answer_label->setText("This expression is absolute false");
+		answer << "This expression is absolute false";
     } else{
-        QString answer("This expression is false at (");
+		answer << "This expression is false at (";
         bool isFirst = true;
         for (Variable data : variables){
             if (!isFirst) {
-                answer.append(", ");
+				answer << ", ";
             }
-            answer.append(QString(data.getSymbol()));
+			answer << data.getSymbol();
             isFirst = false;
         }
-        answer.append("):");
+		answer << "):";
         isFirst = true;
         for(std::vector<bool> vector_data : fAnswer){
             if (!vector_data[vector_data.size()-1]){
                 if(!isFirst) {
-                    answer.append(',');
+					answer << ',';
                 }
-                answer.append(" (");
+				answer << " (";
                 for(int j = 0; j < variables.size(); j++){
                     if(j != 0)
-                        answer.append(", ");
-                    answer.append(QString::number(vector_data[j]));
+						answer << ", ";
+					answer << vector_data[j];
                 }
                 if(vector_data.size() == variables.size())
-                    answer.append("0");
-                answer.append(")");
+					answer << "0";
+				answer << ")";
                 isFirst = false;
             }
         }
-        ui->answer_label->setText(answer);
     }
+	ui->answer_label->setText(QString::fromStdString(answer.str()));
 }
 
 bool MainWindow::check_string_for_brackets(const QString &string) {
@@ -315,7 +311,6 @@ void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
             ui->table->setItem(vars_2 - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
             fAnswer[vars_2 - i].push_back(variables[j].value);
         }
-//        qDebug() << QString::number(variables[0].value);
         auto var_expression = change_var_to_value(expression);
         std::stack<ExpressionSymbol*> exprStack;
         for (ExpressionSymbol *var_expr : var_expression){
@@ -353,7 +348,6 @@ void MainWindow::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
                 opers++;
             }
         }
-//        ui->table->setItem(vars_2 - i, ui->table->columnCount() - 1, new QTableWidgetItem(QString::number(exprStack.top()->value)));
         if (isFirst)
             ui->table->setHorizontalHeaderLabels(labels);
         isFirst = false;

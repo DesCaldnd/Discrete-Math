@@ -30,9 +30,11 @@ public:
 
     virtual void setSymbol(char) =0;
 
-    virtual char getSymbol() = 0;
+    virtual char getSymbol() const = 0;
 
     virtual Type getType() =0;
+
+	virtual ~ExpressionSymbol()=default;
 };
 
 
