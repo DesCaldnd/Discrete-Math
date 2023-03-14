@@ -24,8 +24,14 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QLineEdit" name="expr_edit">
+          <property name="dragEnabled">
+           <bool>true</bool>
+          </property>
           <property name="placeholderText">
            <string>Enter expression:</string>
+          </property>
+          <property name="clearButtonEnabled">
+           <bool>false</bool>
           </property>
          </widget>
         </item>

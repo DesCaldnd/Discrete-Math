@@ -7,6 +7,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "C:/Qt/6.4.2/mingw_64/lib/cmake")
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 if (MSVC)
     set(CMAKE_CXX_FLAGS "/Zc:__cplusplus")
@@ -24,13 +25,25 @@ find_package(Qt6 COMPONENTS
 
 find_package(QXlsxQt6 REQUIRED)
 
-set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/developer.cpp Headers/developer.h Source/developer.ui)
-add_executable(DiscreteMath WIN32 main.cpp Source/mainwindow.cpp Headers/mainwindow.h Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS})
+find_package(Threads REQUIRED)
+
+set(RELEASE_EXECUTABLE "")
+
+if(CMAKE_BUILD_TYPE MATCHES "Release")
+    set(RELEASE_EXECUTABLE WIN32)
+endif()
+
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc")
+add_executable(DiscreteMath ${RELEASE_EXECUTABLE} main.cpp Source/mainwindow.cpp Headers/mainwindow.h
+        Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp
+        Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS}
+        Source/Calculator.cpp Headers/Calculator.h Source/developer.cpp Headers/developer.h Source/developer.ui)
 target_link_libraries(DiscreteMath
         Qt::Core
         Qt::Gui
         Qt::Widgets
         QXlsx::QXlsx
+        Threads::Threads
         )
 
 
