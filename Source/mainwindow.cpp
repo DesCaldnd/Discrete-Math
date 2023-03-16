@@ -17,13 +17,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setMinimumSize(500, 250);
 
-	thread = new QThread();
+//	thread = new QThread();
 
 	calculator = new Calculator(ui->expr_edit, ui->table, ui->answer_label);
 
-	calculator->moveToThread(thread);
+	calculator->moveToThread(&thread);
 
-	thread->start();
+	thread.start();
 
 	errorMessageBox.setWindowTitle("Error");
 
@@ -51,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionBackspace, &QAction::triggered, this, &MainWindow::action_backspace);
     connect(ui->actionDeveloper, &QAction::triggered, this, &MainWindow::action_developer);
     connect(ui->actionSave_Table, &QAction::triggered, this, &MainWindow::action_save);
+	connect(this, &MainWindow::save_signal, calculator, &Calculator::action_file);
 
     ui->statusbar->hide();
 }
@@ -95,5 +96,5 @@ void MainWindow::action_save()
 {
 	QString path = QFileDialog::getSaveFileName(nullptr, tr("Save Table"), "/downloads/untitled.xlsx",
 		tr("Exel new table (*.xlsx);;Exel simple table (*.csv)"));
-	calculator->action_file(path);
+	emit save_signal(path);
 }

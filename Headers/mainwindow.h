@@ -36,7 +36,7 @@ private:
 
 	Developer dev;
 
-	QThread* thread;
+	QThread thread;
 
 private slots:
 
@@ -51,6 +51,9 @@ private slots:
 	void show_error(QString);
 
 	void action_save();
+
+	signals:
+	void save_signal(QString);
 };
 
 

@@ -306,8 +306,7 @@ bool Calculator::check_string_for_end(const QString& string)
 	return true;
 }
 
-void
-Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, const QString& string)
+void Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, const QString& string)
 {
 	trues = 0;
 	fAnswer.clear();
@@ -344,7 +343,7 @@ Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, const
 				Variable result('A');
 				if (var_expr->getSymbol() == '-')
 				{
-					result = *dynamic_cast<Variable*>(exprStack.top());
+					result = *static_cast<Variable*>(exprStack.top());
 					result.positionOfStart--;
 					exprStack.pop();
 					result.value = !result.value;
