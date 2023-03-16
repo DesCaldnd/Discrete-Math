@@ -12,6 +12,7 @@
 #include "developer.h"
 #include "Calculator.h"
 #include <QMessageBox>
+#include <QThread>
 
 
 QT_BEGIN_NAMESPACE
@@ -35,9 +36,9 @@ private:
 
 	Developer dev;
 
-private slots:
+	QThread* thread;
 
-	void eval_button_clicked();
+private slots:
 
     void action_clear_expression();
 

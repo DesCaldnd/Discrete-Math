@@ -4,7 +4,6 @@
 
 #include "../Headers/Calculator.h"
 #include <QRegularExpressionValidator>
-#include <QPushButton>
 #include <QDebug>
 #include <stack>
 #include <iostream>
@@ -15,8 +14,6 @@
 
 void Calculator::eval_button_clicked()
 {
-	isCalculating = true;
-
 	QString string = expr_edit->text();
 	std::ostringstream answer;
 	bool isAllTrue = true, isAllFalse = true;
@@ -25,28 +22,28 @@ void Calculator::eval_button_clicked()
 	if (string.isEmpty())
 	{
 		emit expr_error("Expression is empty");
-		goto exit;
+		return;
 	}
 	if (!check_string_for_brackets(string))
 	{
 		emit expr_error("Brackets error");
-		goto exit;
+		return;
 	}
 	if (!check_string_for_operators(string))
 	{
 		emit expr_error("More than one operator in a row");
-		goto exit;
+		return;
 	}
 	if (!check_string_for_end(string))
 	{
 		emit expr_error("This expression is not completed");
-		goto exit;
+		return;
 	}
 	expression = expr_to_postfix(string);
 	if (variables.size() > 31)
 	{
 		emit expr_error("Too many variables (max=63)");
-		goto exit;
+		return;
 	}
 
 	std::sort(variables.begin(), variables.end());
@@ -118,10 +115,6 @@ void Calculator::eval_button_clicked()
 		}
 	}
 	answer_label->setText(QString::fromStdString(answer.str()));
-
-exit:
-	isCalculating = false;
-	thread.exit(0);
 }
 
 bool Calculator::check_string_for_brackets(const QString& string)
@@ -320,6 +313,7 @@ Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, const
 	fAnswer.clear();
 	table->clear();
 	unsigned int vars_2 = power_of_2(variables.size());
+	fAnswer.reserve(vars_2);
 	table->setRowCount(vars_2);
 	table->setColumnCount(variables.size() + operCount);
 	labels.clear();
@@ -327,6 +321,7 @@ Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, const
 	for (unsigned int i = vars_2; i > 0; i--)
 	{
 		fAnswer.push_back(std::vector<bool>());
+		fAnswer[vars_2 - i].reserve(variables.size() + operCount);
 		int opers = 0;
 		for (int j = 0; j < variables.size(); j++)
 		{
@@ -534,22 +529,5 @@ void Calculator::action_file(QString path)
 	}
 }
 
-void Calculator::evaluate()
-{
-	if (isCalculating)
-		return;
-	thread.start();
-}
-
 Calculator::Calculator(QLineEdit* expr_ed, QTableWidget* tab, QLabel* answer_lab)
-: expr_edit(expr_ed), table(tab), answer_label(answer_lab)
-{
-	moveToThread(&thread);
-	connect(&thread, &QThread::started, this, &Calculator::eval_button_clicked);
-}
-
-Calculator::~Calculator()
-{
-	if(thread.isRunning())
-		thread.exit(0);
-}
+: expr_edit(expr_ed), table(tab), answer_label(answer_lab){}

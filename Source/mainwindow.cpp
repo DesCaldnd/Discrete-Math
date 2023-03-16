@@ -17,15 +17,21 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setMinimumSize(500, 250);
 
+	thread = new QThread();
+
 	calculator = new Calculator(ui->expr_edit, ui->table, ui->answer_label);
+
+	calculator->moveToThread(thread);
+
+	thread->start();
 
 	errorMessageBox.setWindowTitle("Error");
 
     auto *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/]*"}, this};
     ui->expr_edit->setValidator(validator);
 
-    connect(ui->eval_button, &QPushButton::clicked, this, &MainWindow::eval_button_clicked);
-    connect(ui->expr_edit, &QLineEdit::returnPressed, this, &MainWindow::eval_button_clicked);
+    connect(ui->eval_button, &QPushButton::clicked, calculator, &Calculator::eval_button_clicked);
+    connect(ui->expr_edit, &QLineEdit::returnPressed, calculator, &Calculator::eval_button_clicked);
 
 	connect(calculator, &Calculator::expr_error, this, &MainWindow::show_error);
 
@@ -77,11 +83,6 @@ void MainWindow::action_backspace() {
 
 void MainWindow::action_developer() {
     dev.show();
-}
-
-void MainWindow::eval_button_clicked()
-{
-	calculator->evaluate();
 }
 
 void MainWindow::show_error(QString text)

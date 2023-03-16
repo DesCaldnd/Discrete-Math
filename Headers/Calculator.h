@@ -10,7 +10,6 @@
 #include <QString>
 #include <vector>
 #include "Variable.h"
-#include <QThread>
 #include <QTableWidget>
 #include <QLabel>
 #include <QLineEdit>
@@ -25,9 +24,7 @@ class Calculator final : public QObject
 
 	void action_file(QString);
 
-	void evaluate();
-
-	~Calculator();
+	void eval_button_clicked();
 
  private:
 
@@ -68,8 +65,6 @@ class Calculator final : public QObject
 
 	bool isCalculating = false;
 
-	QThread thread;
-
 	QLineEdit* expr_edit = nullptr;
 
 	QTableWidget* table = nullptr;
@@ -77,10 +72,6 @@ class Calculator final : public QObject
 	QLabel* answer_label = nullptr;
 
 	unsigned int trues;
-
- private slots:
-
-	void eval_button_clicked();
 
  signals:
 
