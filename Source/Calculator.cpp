@@ -256,6 +256,8 @@ bool Calculator::check_string_for_operators(const QString& string)
 
 bool Calculator::check_string_for_end(const QString& string)
 {
+	if(string.size() == 1 && (string[0] == '1' || string[0] == '0'))
+		return false;
 	bool hasFirstOperand = false, isOper = false;
 	for (QChar qSym : string)
 	{
