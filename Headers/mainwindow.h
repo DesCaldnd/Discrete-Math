@@ -13,6 +13,7 @@
 #include "Calculator.h"
 #include <QMessageBox>
 #include <QThread>
+#include "GpuComputeTable.h"
 
 
 QT_BEGIN_NAMESPACE

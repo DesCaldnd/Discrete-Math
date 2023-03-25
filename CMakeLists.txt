@@ -6,6 +6,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+find_package(OpenCL REQUIRED)
+
 set(CMAKE_PREFIX_PATH "C:/Qt/6.4.2/mingw_64/lib/cmake")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
@@ -33,7 +35,10 @@ if(CMAKE_BUILD_TYPE MATCHES "Release")
     set(RELEASE_EXECUTABLE WIN32)
 endif()
 
-set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc")
+include_directories("Kernels")
+include_directories("style")
+
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/GpuComputeTable.cpp Headers/GpuComputeTable.h)
 add_executable(DiscreteMath ${RELEASE_EXECUTABLE} main.cpp Source/mainwindow.cpp Headers/mainwindow.h
         Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp
         Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS}
@@ -44,6 +49,7 @@ target_link_libraries(DiscreteMath
         Qt::Widgets
         QXlsx::QXlsx
         Threads::Threads
+        OpenCL::OpenCL
         )
 
 

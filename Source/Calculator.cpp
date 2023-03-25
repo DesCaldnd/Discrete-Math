@@ -11,13 +11,17 @@
 #include <QFileInfo>
 #include "../Headers/Operation.h"
 #include "xlsxdocument.h"
+#include <QScrollBar>
 
 void Calculator::eval_button_clicked()
 {
 	QString string = expr_edit->text();
 	std::ostringstream answer;
 	bool isAllTrue = true, isAllFalse = true;
-	std::vector<ExpressionSymbol*> expression;
+	std::vector<ExpressionSymbol *> expression;
+
+	table->verticalScrollBar()->setValue(0);
+	table->horizontalScrollBar()->setValue(0);
 
 	if (string.isEmpty())
 	{
@@ -40,38 +44,38 @@ void Calculator::eval_button_clicked()
 		return;
 	}
 	expression = expr_to_postfix(string);
-	if (variables.size() > 31)
+	if (variables.size() > 19)
 	{
-		emit expr_error("Too many variables (max=63)");
+		emit expr_error("Too many variables (max=19)");
 		return;
 	}
 
 	std::sort(variables.begin(), variables.end());
+	table->clear();
 
-	evaluate_expression(expression, string);
+	bool* result_table = compute.run(variables, expression, operCount, trues);
+	unsigned int vars_2 = power_of_2(variables.size());
+	table->setRowCount(vars_2);
+	table->setColumnCount(variables.size() + operCount);
+	for (int i = 0; i < table->rowCount(); ++i)
+		for (int j = 0; j < table->columnCount(); ++j)
+		{
+			table->setItem(i, j, new QTableWidgetItem(QString::number(result_table[i * (variables.size() + operCount) + j])));
+		}
 
-	for (std::vector<bool> vector_data : fAnswer)
-	{
-		bool x = vector_data[vector_data.size() - 1];
-		if (!x)
-			isAllTrue = false;
-		else
-			isAllFalse = false;
-		if (!(isAllTrue || isAllFalse))
-			break;
-	}
-	if (isAllTrue)
+//	evaluate_expression(expression, string);
+	table->resizeColumnsToContents();
+
+	if (trues == vars_2)
 	{
 		answer << "This expression is absolute true";
-	}
-	else if (isAllFalse)
+	} else if (trues == 0)
 	{
 		answer << "This expression is absolute false";
-	}
-	else
+	} else
 	{
 		answer << "This expression is ";
-		bool variant = ((double) trues / (double) (fAnswer.size() - 1)) >= 0.5;
+		bool variant = ((double)trues / (double)(fAnswer.size() - 1)) >= 0.5;
 		if (!variant)
 		{
 			answer << "true";
@@ -115,9 +119,10 @@ void Calculator::eval_button_clicked()
 		}
 	}
 	answer_label->setText(QString::fromStdString(answer.str()));
+	delete[] result_table;
 }
 
-bool Calculator::check_string_for_brackets(const QString& string)
+bool Calculator::check_string_for_brackets(const QString &string)
 {
 	int brackets = 0;
 	for (QChar qSym : string)
@@ -132,12 +137,12 @@ bool Calculator::check_string_for_brackets(const QString& string)
 	return brackets == 0;
 }
 
-std::vector<ExpressionSymbol*> Calculator::expr_to_postfix(const QString& string)
+std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &string)
 {
 	variables.clear();
 	operCount = 0;
 
-	std::vector<ExpressionSymbol*> answer;
+	std::vector<ExpressionSymbol *> answer;
 	std::stack<Operation> operationStack;
 
 	int i = 0;
@@ -146,51 +151,50 @@ std::vector<ExpressionSymbol*> Calculator::expr_to_postfix(const QString& string
 		char sym = qSym.toLatin1();
 		switch (symType(sym))
 		{
-		case Var:
-		{
-			answer.push_back(new Variable(sym, i));
-			if (!hasVar(sym))
-				variables.push_back(Variable{ sym });
-			break;
-		}
-		case Oper:
-		{
-			operCount++;
-			int order = Operation::order(sym);
-			while (!operationStack.empty())
+			case Var:
 			{
-				if (operationStack.top().getOrder() > order)
+				answer.push_back(new Variable(sym, i));
+				if (!hasVar(sym))
+					variables.push_back(Variable{sym});
+				break;
+			}
+			case Oper:
+			{
+				operCount++;
+				int order = Operation::order(sym);
+				while (!operationStack.empty())
+				{
+					if (operationStack.top().getOrder() > order)
+					{
+						answer.push_back(new Operation(operationStack.top()));
+						operationStack.pop();
+					} else
+						break;
+				}
+				operationStack.push(Operation{sym, i});
+				break;
+			}
+			case OpenBracket:
+			{
+				operationStack.push(Operation{sym});
+				break;
+			}
+			case CloseBracket:
+			{
+				while (operationStack.top().getSymbol() != '(')
 				{
 					answer.push_back(new Operation(operationStack.top()));
 					operationStack.pop();
 				}
-				else
-					break;
-			}
-			operationStack.push(Operation{ sym, i });
-			break;
-		}
-		case OpenBracket:
-		{
-			operationStack.push(Operation{ sym });
-			break;
-		}
-		case CloseBracket:
-		{
-			while (operationStack.top().getSymbol() != '(')
-			{
-				answer.push_back(new Operation(operationStack.top()));
 				operationStack.pop();
+				break;
 			}
-			operationStack.pop();
-			break;
-		}
-		case Constant:
-		{
-			answer.push_back(new Variable(sym, i));
-			answer[answer.size() - 1]->value = (sym == '1');
-			break;
-		}
+			case Constant:
+			{
+				answer.push_back(new Variable(sym, i));
+				answer[answer.size() - 1]->value = (sym == '1');
+				break;
+			}
 		}
 		i++;
 	}
@@ -227,7 +231,7 @@ bool Calculator::hasVar(char var)
 	return false;
 }
 
-bool Calculator::check_string_for_operators(const QString& string)
+bool Calculator::check_string_for_operators(const QString &string)
 {
 	bool isOperator = false, isMinus = false;
 	for (QChar qSym : string)
@@ -238,13 +242,11 @@ bool Calculator::check_string_for_operators(const QString& string)
 			if (isOperator)
 				return false;
 			isOperator = true;
-		}
-		else if (sym != '-')
+		} else if (sym != '-')
 		{
 			isOperator = false;
 			isMinus = false;
-		}
-		else
+		} else
 		{
 			if (isMinus)
 				return false;
@@ -254,9 +256,9 @@ bool Calculator::check_string_for_operators(const QString& string)
 	return !(isMinus || isOperator);
 }
 
-bool Calculator::check_string_for_end(const QString& string)
+bool Calculator::check_string_for_end(const QString &string)
 {
-	if(string.size() == 1 && (string[0] == '1' || string[0] == '0'))
+	if (string.size() == 1 && (string[0] == '1' || string[0] == '0'))
 		return false;
 	bool hasFirstOperand = false, isOper = false;
 	for (QChar qSym : string)
@@ -264,59 +266,55 @@ bool Calculator::check_string_for_end(const QString& string)
 		char sym = qSym.toLatin1();
 		switch (symType(sym))
 		{
-		case Oper:
-		{
-			if (sym != '-')
+			case Oper:
 			{
-				if (!hasFirstOperand)
+				if (sym != '-')
+				{
+					if (!hasFirstOperand)
+					{
+						return false;
+					} else
+					{
+						hasFirstOperand = false;
+					}
+				}
+				isOper = true;
+				break;
+			}
+			case OpenBracket:
+			{
+				isOper = false;
+				hasFirstOperand = false;
+				break;
+			}
+			case CloseBracket:
+			{
+				if (isOper)
 				{
 					return false;
 				}
-				else
-				{
-					hasFirstOperand = false;
-				}
+				hasFirstOperand = true;
+				break;
 			}
-			isOper = true;
-			break;
-		}
-		case OpenBracket:
-		{
-			isOper = false;
-			hasFirstOperand = false;
-			break;
-		}
-		case CloseBracket:
-		{
-			if (isOper)
+			default:
 			{
-				return false;
+				if (hasFirstOperand)
+					return false;
+				hasFirstOperand = true;
+				isOper = false;
+				break;
 			}
-			hasFirstOperand = true;
-			break;
-		}
-		default:
-		{
-			if (hasFirstOperand)
-				return false;
-			hasFirstOperand = true;
-			isOper = false;
-			break;
-		}
 		}
 	}
 	return true;
 }
 
-void Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, const QString& string)
+void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression, const QString &string)
 {
 	trues = 0;
 	fAnswer.clear();
-	table->clear();
 	unsigned int vars_2 = power_of_2(variables.size());
 	fAnswer.reserve(vars_2);
-	table->setRowCount(vars_2);
-	table->setColumnCount(variables.size() + operCount);
 	labels.clear();
 	bool isFirst = true;
 	for (unsigned int i = vars_2; i > 0; i--)
@@ -326,41 +324,39 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
 		int opers = 0;
 		for (int j = 0; j < variables.size(); j++)
 		{
-			variables[j].value = (1ULL << variables.size() - (j + 1)) & (i - 1);
+			variables[j].value = (1u << variables.size() - (j + 1)) & (i - 1);
 			if (isFirst)
 				labels << QString(variables[j].getSymbol());
 			table->setItem(vars_2 - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
 			fAnswer[vars_2 - i].push_back(variables[j].value);
 		}
 		auto var_expression = change_var_to_value(expression);
-		std::stack<ExpressionSymbol*> exprStack;
-		for (ExpressionSymbol* var_expr : var_expression)
+		std::stack<ExpressionSymbol *> exprStack;
+		for (ExpressionSymbol *var_expr : var_expression)
 		{
 			if (var_expr->getType() == ExpressionSymbol::Type::Var)
 			{
 				exprStack.push(var_expr);
-			}
-			else
+			} else
 			{
 				Variable result('A');
 				if (var_expr->getSymbol() == '-')
 				{
-					result = *static_cast<Variable*>(exprStack.top());
+					result = *static_cast<Variable *>(exprStack.top());
 					result.positionOfStart--;
 					exprStack.pop();
 					result.value = !result.value;
-				}
-				else
+				} else
 				{
 					auto second_val = exprStack.top();
 					exprStack.pop();
 					auto first_val = exprStack.top();
 					exprStack.pop();
-					result = calc_value(*static_cast<Variable*>(first_val), *static_cast<Variable*>(second_val),
-						var_expr->getSymbol());
+					result = calc_value(*static_cast<Variable *>(first_val), *static_cast<Variable *>(second_val),
+										var_expr->getSymbol());
 				}
 				table->setItem(vars_2 - i, variables.size() + opers,
-					new QTableWidgetItem(QString::number(result.value)));
+							   new QTableWidgetItem(QString::number(result.value)));
 				if (isFirst)
 				{
 					while (result.positionOfStart > 0 && result.positionOfEnd < string.length() - 1)
@@ -370,8 +366,7 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
 						{
 							result.positionOfStart--;
 							result.positionOfEnd++;
-						}
-						else
+						} else
 							break;
 					}
 					labels << string.mid(result.positionOfStart, result.positionOfEnd - result.positionOfStart + 1);
@@ -385,13 +380,11 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol*> expression, 
 		{
 			table->setHorizontalHeaderLabels(labels);
 			isFirst = false;
-		}
-		else if(fAnswer[vars_2 - i][fAnswer[vars_2 - i].size() - 1] == true)
+		} else if (fAnswer[vars_2 - i][fAnswer[vars_2 - i].size() - 1] == true)
 		{
 			trues++;
 		}
 	}
-	table->resizeColumnsToContents();
 }
 
 unsigned int Calculator::power_of_2(unsigned int pow)
@@ -404,9 +397,9 @@ unsigned int Calculator::power_of_2(unsigned int pow)
 	return result;
 }
 
-std::vector<ExpressionSymbol*> Calculator::change_var_to_value(std::vector<ExpressionSymbol*>& expression)
+std::vector<ExpressionSymbol *> Calculator::change_var_to_value(std::vector<ExpressionSymbol *> &expression)
 {
-	for (ExpressionSymbol* expr : expression)
+	for (ExpressionSymbol *expr : expression)
 	{
 		if (symType(expr->getSymbol()) == Calculator::SymType::Var)
 		{
@@ -428,41 +421,41 @@ bool Calculator::value_of_var(char var)
 
 Variable Calculator::calc_value(Variable first_var, Variable second_var, char oper)
 {
-	Variable result{ '1', first_var.positionOfStart };
+	Variable result{'1', first_var.positionOfStart};
 	result.positionOfEnd = second_var.positionOfEnd;
 	bool f = first_var.value, s = second_var.value;
 	switch (oper)
 	{
-	case '&':
-	{
-		f = f && s;
-		break;
-	}
-	case '|':
-	{
-		f = f || s;
-		break;
-	}
-	case '<':
-	{
-		f = f <= s;
-		break;
-	}
-	case '~':
-	{
-		f = f == s;
-		break;
-	}
-	case '/':
-	{
-		f = f && !s;
-		break;
-	}
-	case '+':
-	{
-		f = f != s;
-		break;
-	}
+		case '&':
+		{
+			f = f && s;
+			break;
+		}
+		case '|':
+		{
+			f = f || s;
+			break;
+		}
+		case '<':
+		{
+			f = f <= s;
+			break;
+		}
+		case '~':
+		{
+			f = f == s;
+			break;
+		}
+		case '/':
+		{
+			f = f && !s;
+			break;
+		}
+		case '+':
+		{
+			f = f != s;
+			break;
+		}
 	}
 	result.value = f;
 	return result;
@@ -480,7 +473,7 @@ void Calculator::action_file(QString path)
 		if (!outData.is_open())
 		{
 			emit expr_error("Error during file open");
-			
+
 			return;
 		}
 		outData << "Row index;";
@@ -501,8 +494,7 @@ void Calculator::action_file(QString path)
 			i++;
 		}
 		outData.close();
-	}
-	else
+	} else
 	{
 		QXlsx::Document outData;
 		QVariant writeValue = QString("Row index");
@@ -530,5 +522,5 @@ void Calculator::action_file(QString path)
 	}
 }
 
-Calculator::Calculator(QLineEdit* expr_ed, QTableWidget* tab, QLabel* answer_lab)
-: expr_edit(expr_ed), table(tab), answer_label(answer_lab){}
+Calculator::Calculator(QLineEdit *expr_ed, QTableWidget *tab, QLabel *answer_lab)
+	: expr_edit(expr_ed), table(tab), answer_label(answer_lab) {}

@@ -13,6 +13,7 @@
 #include <QTableWidget>
 #include <QLabel>
 #include <QLineEdit>
+#include "GpuComputeTable.h"
 
 class Calculator final : public QObject
 {
@@ -72,6 +73,8 @@ class Calculator final : public QObject
 	QLabel* answer_label = nullptr;
 
 	unsigned int trues;
+
+	GPUComputeTable compute;
 
  signals:
 
