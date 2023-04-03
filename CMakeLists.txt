@@ -38,7 +38,7 @@ endif()
 include_directories("Kernels")
 include_directories("style")
 
-set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/GpuComputeTable.cpp Headers/GpuComputeTable.h)
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/GpuComputeTable.cpp Headers/GpuComputeTable.h Source/gpu_settings.cpp Headers/gpu_settings.h Source/gpu_settings.ui)
 add_executable(DiscreteMath ${RELEASE_EXECUTABLE} main.cpp Source/mainwindow.cpp Headers/mainwindow.h
         Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp
         Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS}

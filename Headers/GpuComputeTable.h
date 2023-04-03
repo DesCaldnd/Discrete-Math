@@ -9,8 +9,10 @@
 
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_TARGET_OPENCL_VERSION 300
+#define CL_HPP_MINIMUM_OPENCL_VERSION 300
 #include <vector>
 #include <CL/opencl.hpp>
+#include <memory>
 #include "Variable.h"
 #include "Operation.h"
 
@@ -20,7 +22,8 @@ public:
 
 	GPUComputeTable();
 
-	bool* run(const std::vector<Variable> &variables, const std::vector<ExpressionSymbol*> &expression, const int operCount, unsigned int &trues);
+	void run(std::vector<bool> &result, const std::vector<Variable> &variables, const std::vector<ExpressionSymbol*> &expression,
+			 const int operCount, unsigned int &trues);
 
 	~GPUComputeTable();
 
@@ -38,11 +41,11 @@ private:
 
 	unsigned int power_of_2(unsigned int pow);
 
-	cl::CommandQueue *command_queue_;
+	std::unique_ptr<cl::CommandQueue> command_queue_;
 
-	cl::Program *program_;
+	std::unique_ptr<cl::Program> program_;
 
-	cl::Context *context_;
+	std::unique_ptr<cl::Context> context_;
 
 	int max_group_size;
 };

@@ -14,6 +14,8 @@
 #include <QLabel>
 #include <QLineEdit>
 #include "GpuComputeTable.h"
+#include <memory>
+#include <QSettings>
 
 class Calculator final : public QObject
 {
@@ -51,7 +53,7 @@ class Calculator final : public QObject
 
 	std::vector<Variable> variables{};
 
-	std::vector<std::vector<bool>> fAnswer;
+	std::vector<bool> fAnswer;
 
 	QStringList labels;
 
@@ -74,7 +76,17 @@ class Calculator final : public QObject
 
 	unsigned int trues;
 
-	GPUComputeTable compute;
+	std::unique_ptr<GPUComputeTable> compute_module;
+
+	bool can_compute_gpu = true;
+
+	bool use_gpu = true;
+
+	int min_variables_for_gpu = 10;
+
+	void calculate_and_set_labels(std::vector<ExpressionSymbol*>, const QString&);
+
+	QSettings settings_;
 
  signals:
 

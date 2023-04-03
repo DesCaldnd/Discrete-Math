@@ -53,19 +53,32 @@ void Calculator::eval_button_clicked()
 	std::sort(variables.begin(), variables.end());
 	table->clear();
 
-	bool* result_table = compute.run(variables, expression, operCount, trues);
+	settings_.beginGroup("gpu");
+	use_gpu = settings_.value("use", true).toBool();
+	min_variables_for_gpu = settings_.value("vars", 10).toBool();
+
+	if (variables.size() >= min_variables_for_gpu && can_compute_gpu && use_gpu)
+	{
+		compute_module->run(fAnswer, variables, expression, operCount, trues);
+		qDebug() << "GPU compute_module";
+	}
+	else
+	{
+		evaluate_expression(expression, string);
+		qDebug() << "CPU compute_module";
+	}
 	unsigned int vars_2 = power_of_2(variables.size());
 	table->setRowCount(vars_2);
 	table->setColumnCount(variables.size() + operCount);
+	calculate_and_set_labels(expression, string);
 	for (int i = 0; i < table->rowCount(); ++i)
 		for (int j = 0; j < table->columnCount(); ++j)
 		{
-			table->setItem(i, j, new QTableWidgetItem(QString::number(result_table[i * (variables.size() + operCount) + j])));
+			table->setItem(i, j, new QTableWidgetItem(QString::number(fAnswer[i * (variables.size() + operCount) + j])));
 		}
 
 //	evaluate_expression(expression, string);
 	table->resizeColumnsToContents();
-
 	if (trues == vars_2)
 	{
 		answer << "This expression is absolute true";
@@ -75,7 +88,8 @@ void Calculator::eval_button_clicked()
 	} else
 	{
 		answer << "This expression is ";
-		bool variant = ((double)trues / (double)(fAnswer.size() - 1)) >= 0.5;
+		qDebug() << "Trues: " << trues;
+		bool variant = ((double)trues / (double)(vars_2 - 1)) >= 0.5;
 		if (!variant)
 		{
 			answer << "true";
@@ -96,9 +110,9 @@ void Calculator::eval_button_clicked()
 		}
 		answer << "):";
 		isFirst = true;
-		for (std::vector<bool> vector_data : fAnswer)
+		for (int i = 0; i < vars_2; ++i)
 		{
-			if (vector_data[vector_data.size() - 1] != variant)
+			if (fAnswer[(i + 1) * (variables.size() + operCount) - 1] != variant)
 			{
 				if (!isFirst)
 				{
@@ -109,17 +123,14 @@ void Calculator::eval_button_clicked()
 				{
 					if (j != 0)
 						answer << ", ";
-					answer << vector_data[j];
+					answer << fAnswer[i * (variables.size() + operCount) + j];
 				}
-				if (vector_data.size() == variables.size())
-					answer << "0";
 				answer << ")";
 				isFirst = false;
 			}
 		}
 	}
 	answer_label->setText(QString::fromStdString(answer.str()));
-	delete[] result_table;
 }
 
 bool Calculator::check_string_for_brackets(const QString &string)
@@ -314,21 +325,16 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression,
 	trues = 0;
 	fAnswer.clear();
 	unsigned int vars_2 = power_of_2(variables.size());
-	fAnswer.reserve(vars_2);
+	fAnswer.reserve(vars_2 * (variables.size() + operCount));
 	labels.clear();
-	bool isFirst = true;
 	for (unsigned int i = vars_2; i > 0; i--)
 	{
-		fAnswer.push_back(std::vector<bool>());
-		fAnswer[vars_2 - i].reserve(variables.size() + operCount);
 		int opers = 0;
 		for (int j = 0; j < variables.size(); j++)
 		{
 			variables[j].value = (1u << variables.size() - (j + 1)) & (i - 1);
-			if (isFirst)
-				labels << QString(variables[j].getSymbol());
-			table->setItem(vars_2 - i, j, new QTableWidgetItem(QString::number(variables[j].value)));
-			fAnswer[vars_2 - i].push_back(variables[j].value);
+			fAnswer.push_back(variables[j].value);
+//			qDebug() << QString(variables[j].getSymbol()) << QString::number(fAnswer[fAnswer.size() - 1]);
 		}
 		auto var_expression = change_var_to_value(expression);
 		std::stack<ExpressionSymbol *> exprStack;
@@ -355,32 +361,12 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression,
 					result = calc_value(*static_cast<Variable *>(first_val), *static_cast<Variable *>(second_val),
 										var_expr->getSymbol());
 				}
-				table->setItem(vars_2 - i, variables.size() + opers,
-							   new QTableWidgetItem(QString::number(result.value)));
-				if (isFirst)
-				{
-					while (result.positionOfStart > 0 && result.positionOfEnd < string.length() - 1)
-					{
-						if (string[result.positionOfStart - 1].toLatin1() == '('
-							&& string[result.positionOfEnd + 1].toLatin1() == ')')
-						{
-							result.positionOfStart--;
-							result.positionOfEnd++;
-						} else
-							break;
-					}
-					labels << string.mid(result.positionOfStart, result.positionOfEnd - result.positionOfStart + 1);
-				}
 				exprStack.push(new Variable(result));
-				fAnswer[vars_2 - i].push_back(result.value);
+				fAnswer.push_back(result.value);
 				opers++;
 			}
 		}
-		if (isFirst)
-		{
-			table->setHorizontalHeaderLabels(labels);
-			isFirst = false;
-		} else if (fAnswer[vars_2 - i][fAnswer[vars_2 - i].size() - 1] == true)
+		if (fAnswer[(vars_2 - i + 1) * (variables.size() + operCount) - 1] == true)
 		{
 			trues++;
 		}
@@ -482,16 +468,14 @@ void Calculator::action_file(QString path)
 			outData << data.toStdString() << ';';
 		}
 		outData << std::endl;
-		int i = 1;
-		for (std::vector<bool> iter : fAnswer)
+		for (int i = 0, vars_2 = power_of_2(variables.size()); i < vars_2; ++i)
 		{
-			outData << i << ';';
-			for (bool data : iter)
+			outData << i + 1 << ';';
+			for (int j = 0, max_c = variables.size() + operCount; j < max_c; ++j)
 			{
-				outData << data << ';';
+				outData << fAnswer[i * max_c + j] << ';';
 			}
 			outData << std::endl;
-			i++;
 		}
 		outData.close();
 	} else
@@ -506,21 +490,78 @@ void Calculator::action_file(QString path)
 			outData.write(1, i, data);
 			i++;
 		}
-		i = 2;
-		for (std::vector<bool> iter : fAnswer)
+		for (int i = 0, vars_2 = power_of_2(variables.size()); i < vars_2; ++i)
 		{
 			int j = 2;
-			outData.write(i, 1, i - 1);
-			for (bool data : iter)
+			outData.write(i + 2, 1, i + 1);
+			for (int j = 0, max_c = variables.size() + operCount; j < max_c; ++j)
 			{
-				outData.write(i, j, static_cast<int>(data));
-				j++;
+				outData.write(i + 2, j + 2, static_cast<int>(fAnswer[i * max_c + j]));
 			}
-			i++;
 		}
 		outData.saveAs(path);
 	}
 }
 
 Calculator::Calculator(QLineEdit *expr_ed, QTableWidget *tab, QLabel *answer_lab)
-	: expr_edit(expr_ed), table(tab), answer_label(answer_lab) {}
+	: expr_edit(expr_ed), table(tab), answer_label(answer_lab), settings_("settings.ini",QSettings::IniFormat)
+	{
+	try
+	{
+		compute_module = std::make_unique<GPUComputeTable>();
+	}
+	catch (...)
+	{
+		can_compute_gpu = false;
+	}
+}
+
+void Calculator::calculate_and_set_labels(std::vector<ExpressionSymbol *> expression, const QString &string)
+{
+	labels.clear();
+	for (int j = 0; j < variables.size(); j++)
+	{
+		variables[j].value = (1u << variables.size() - (j + 1)) & (1 - 1);
+		labels << QString(variables[j].getSymbol());
+	}
+	auto var_expression = change_var_to_value(expression);
+	std::stack<ExpressionSymbol *> exprStack;
+	for (ExpressionSymbol *var_expr : var_expression)
+	{
+		if (var_expr->getType() == ExpressionSymbol::Type::Var)
+		{
+			exprStack.push(var_expr);
+		} else
+		{
+			Variable result('A');
+			if (var_expr->getSymbol() == '-')
+			{
+				result = *static_cast<Variable *>(exprStack.top());
+				result.positionOfStart--;
+				exprStack.pop();
+				result.value = !result.value;
+			} else
+			{
+				auto second_val = exprStack.top();
+				exprStack.pop();
+				auto first_val = exprStack.top();
+				exprStack.pop();
+				result = calc_value(*static_cast<Variable *>(first_val), *static_cast<Variable *>(second_val),
+									var_expr->getSymbol());
+			}
+			while (result.positionOfStart > 0 && result.positionOfEnd < string.length() - 1)
+			{
+				if (string[result.positionOfStart - 1].toLatin1() == '('
+					&& string[result.positionOfEnd + 1].toLatin1() == ')')
+				{
+					result.positionOfStart--;
+					result.positionOfEnd++;
+				} else
+					break;
+			}
+			labels << string.mid(result.positionOfStart, result.positionOfEnd - result.positionOfStart + 1);
+			exprStack.push(new Variable(result));
+		}
+	}
+	table->setHorizontalHeaderLabels(labels);
+}

@@ -23,6 +23,6 @@
         <file>style/Diffnes.qss</file>
     </qresource>
     <qresource prefix="/Kernels">
-        <file>Kernels/TableComputeKernel.cl</file>
+        <file>Kernels/TableComputeKernel.clcpp</file>
     </qresource>
 </RCC>

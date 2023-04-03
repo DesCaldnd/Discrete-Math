@@ -40,7 +40,7 @@ GPUComputeTable::GPUComputeTable()
 		throw std::runtime_error("No platform found");
 
 	std::vector<cl::Device> devices;
-	platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
+	platform.getDevices(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, &devices);
 	if (devices.empty())
 		throw std::runtime_error("No devices found");
 	cl::Device device = devices[0];
@@ -59,6 +59,7 @@ GPUComputeTable::GPUComputeTable()
 	unsigned int frequency = device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
 	std::string opencl_c_version = device.getInfo<CL_DEVICE_OPENCL_C_VERSION>();
 	max_group_size = device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
+	int max_compute_units = device.getInfo<	CL_DEVICE_MAX_COMPUTE_UNITS>();
 	qDebug() << "Name: " << QString::fromStdString(name)
 			 << "\nAvailable: " << QString::number(available)
 			 << "\nVendor: " << QString::fromStdString(vendor)
@@ -68,6 +69,7 @@ GPUComputeTable::GPUComputeTable()
 			 << "\nGlobal memory size: " << QString::number(global_mem_size)
 			 << "\nLocal memory size: " << QString::number(local_mem_size)
 			 << "\nMax work group size: " << QString::number(max_group_size)
+			 << "\nMax compute_module units: " << QString::number(max_compute_units)
 			 << "\nFrequency: " << QString::number(frequency)
 			 << "\nOpenCL C version: " << QString::fromStdString(opencl_c_version)
 			 << "\nExtensions: " << QString::fromStdString(extensions)
@@ -77,9 +79,9 @@ GPUComputeTable::GPUComputeTable()
 		CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform()),
 		0 // signals end of property list
 	};
-	context_ = new cl::Context{CL_DEVICE_TYPE_GPU, properties};
+	context_ = std::make_unique<cl::Context>(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, properties);
 
-	std::ifstream kernel_file("../Kernels/TableComputeKernel.cl");
+	std::ifstream kernel_file("../Kernels/TableComputeKernel.clcpp");
 	std::ostringstream sstr;
 	sstr << kernel_file.rdbuf();
 	std::string code = sstr.str();
@@ -87,10 +89,9 @@ GPUComputeTable::GPUComputeTable()
 
 	cl::Program::Sources sources;
 	sources.push_back({code.c_str(), code.length()});
-
 	try
 	{
-		program_ = new cl::Program{*context_, sstr.str(), true};
+		program_ = std::make_unique<cl::Program>(*context_, sstr.str(), true);
 	} catch (cl::BuildError &err) {
 		std::cerr << "OCL BUILD ERROR: " << err.err() << ":" << err.what()
 				  << std::endl;
@@ -98,21 +99,28 @@ GPUComputeTable::GPUComputeTable()
 		for (auto e : err.getBuildLog())
 			std::cerr << e.second;
 		std::cerr << "-- End log --\n";
+		throw;
 	} catch (cl::Error &err) {
 		std::cerr << "OCL ERROR: " << err.err() << ":" << err.what() << std::endl;
+		throw;
 	} catch (std::runtime_error &err) {
 		std::cerr << "RUNTIME ERROR: " << err.what() << std::endl;
+		throw;
 	} catch (...) {
 		std::cerr << "UNKNOWN ERROR\n";
+		throw;
 	}
 	qDebug() << "Kernel code: " << QString::fromStdString(code);
 
-	command_queue_ = new cl::CommandQueue{*context_, device};
+	command_queue_ = std::make_unique<cl::CommandQueue>(*context_, device);
 }
 
-bool* GPUComputeTable::run(const std::vector<Variable> &variables, const std::vector<ExpressionSymbol*> &expression, const int operCount, unsigned int &trues)
+void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable> &variables,
+						  const std::vector<ExpressionSymbol*> &expression, const int operCount, unsigned int &trues)
 {
+	trues = 0;
 	unsigned int vars_2 = power_of_2(variables.size());
+	int group_size = vars_2 < max_group_size ? vars_2 : max_group_size;
 	cl::Buffer vars_buf(*context_, CL_MEM_READ_WRITE, sizeof(ES) * variables.size());
 	cl::Buffer expr_buf(*context_, CL_MEM_READ_WRITE, sizeof(ES) * expression.size());
 	cl::Buffer trues_buf(*context_, CL_MEM_READ_WRITE, sizeof(unsigned int));
@@ -137,24 +145,25 @@ bool* GPUComputeTable::run(const std::vector<Variable> &variables, const std::ve
 	cl::copy(*command_queue_, &trues, (&trues) + 1, trues_buf);
 
 	cl::NDRange GlobalRange{vars_2};
-	cl::EnqueueArgs Args{*command_queue_, GlobalRange};
-	cl::KernelFunctor<cl::Buffer, int, cl::Buffer, int, int, cl::Buffer, cl::Buffer> process_vecs{*program_, "compute_table"};
+	cl::NDRange LocalRange{(unsigned long long)group_size};
+	cl::EnqueueArgs Args{*command_queue_, GlobalRange, LocalRange};
+	cl::KernelFunctor<cl::Buffer, int, cl::Buffer, int, int, cl::Buffer, cl::Buffer,
+		cl::LocalSpaceArg, cl::LocalSpaceArg> process_vecs{*program_, "compute_table"};
 
-	cl::Event evt = process_vecs(Args, vars_buf, variables.size(), expr_buf, expression.size(), operCount, trues_buf, answer_buf);
-	bool *result = new bool[vars_2 * (variables.size() + operCount)];
+	cl::Event evt = process_vecs(Args, vars_buf, variables.size(), expr_buf, expression.size(), operCount, trues_buf,
+								 answer_buf, cl::Local(sizeof(ES) * expression.size() * group_size),
+								 cl::Local(sizeof(ES) * variables.size() * group_size));
+	result.clear();
+	result.reserve(vars_2 * (variables.size() + operCount));
+	result.resize(vars_2 * (variables.size() + operCount), true);
 	evt.wait();
 
-	cl::copy(*command_queue_, answer_buf, result, result + vars_2 * (variables.size() + operCount));
-
-	return result;
+	cl::copy(*command_queue_, answer_buf, result.begin(), result.end());
+	cl::copy(*command_queue_, trues_buf, &trues, (&trues) + 1);
 }
 
 GPUComputeTable::~GPUComputeTable()
-{
-	delete program_;
-	delete context_;
-	delete command_queue_;
-}
+{}
 
 unsigned int GPUComputeTable::power_of_2(unsigned int pow)
 {

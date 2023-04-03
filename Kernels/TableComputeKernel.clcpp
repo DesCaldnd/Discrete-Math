@@ -8,11 +8,16 @@ struct ExpressionSymbol
 	enum Type type;
 };
 
+
 __kernel void compute_table(__global struct ExpressionSymbol* variables, int var_count, __global struct ExpressionSymbol* expression, int expr_sym_count, int oper_count,
-	__global unsigned int* trues, __global bool* fAnswer)
+	__global unsigned int* trues, __global bool* fAnswer, __local struct ExpressionSymbol* stack, __local struct ExpressionSymbol* vars_init)
 {
 	int id = get_global_id(0);
 	int width = var_count + oper_count;
-	for (int i = 0; i < width; ++i)
+	for (int i = 0; i < width; ++i){
+		//fAnswer[id * width + i] = (id * width + i) % 2 == 0;
 		fAnswer[id * width + i] = true;
+		if (fAnswer[id * width + i] == true && i == width - 1)
+			atomic_add(trues, 1);
+	}
 }
