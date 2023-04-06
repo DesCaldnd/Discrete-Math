@@ -21,8 +21,18 @@ public:
 
 	~GPU_Settings() override;
 
+private slots:
+
+	void checkbox_changed(int v);
+
+	void vars_changed(int v);
+
+	void button_pushed();
+
 private:
 	Ui::GPU_Settings *ui;
+
+	QSettings settings_;
 };
 
 #endif //DISCRETEMATH_HEADERS_GPU_SETTINGS_H_

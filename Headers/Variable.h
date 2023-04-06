@@ -7,6 +7,7 @@
 
 #include "ExpressionSymbol.h"
 #include <compare>
+#include <QDebug>
 
 class Variable final : public ExpressionSymbol{
     Type type = ExpressionSymbol::Type::Var;
@@ -30,7 +31,7 @@ public:
 		return this->getSymbol() <=> other.getSymbol();
 	}
 
-	~Variable() override=default;
+	~Variable() override =default;
 };
 
 

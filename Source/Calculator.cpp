@@ -17,8 +17,7 @@ void Calculator::eval_button_clicked()
 {
 	QString string = expr_edit->text();
 	std::ostringstream answer;
-	bool isAllTrue = true, isAllFalse = true;
-	std::vector<ExpressionSymbol *> expression;
+	std::vector<std::shared_ptr<ExpressionSymbol>> expression;
 
 	table->verticalScrollBar()->setValue(0);
 	table->horizontalScrollBar()->setValue(0);
@@ -51,25 +50,35 @@ void Calculator::eval_button_clicked()
 	}
 
 	std::sort(variables.begin(), variables.end());
-	table->clear();
 
 	settings_.beginGroup("gpu");
 	use_gpu = settings_.value("use", true).toBool();
-	min_variables_for_gpu = settings_.value("vars", 10).toBool();
+	min_variables_for_gpu = settings_.value("vars", 10).toInt();
+	settings_.endGroup();
+
+	qDebug() << "Use GPU: " << use_gpu;
+	qDebug() << "Min vars for GPU: " << min_variables_for_gpu;
 
 	if (variables.size() >= min_variables_for_gpu && can_compute_gpu && use_gpu)
 	{
 		compute_module->run(fAnswer, variables, expression, operCount, trues);
-		qDebug() << "GPU compute_module";
+		qDebug() << "GPU compute module used";
 	}
 	else
 	{
 		evaluate_expression(expression, string);
-		qDebug() << "CPU compute_module";
+		qDebug() << "CPU compute module used";
 	}
 	unsigned int vars_2 = power_of_2(variables.size());
 	table->setRowCount(vars_2);
 	table->setColumnCount(variables.size() + operCount);
+
+	if (table->rowCount() != vars_2 || table->columnCount() != variables.size() + operCount)
+	{
+		emit expr_error("Not enough memory");
+		return;
+	}
+
 	calculate_and_set_labels(expression, string);
 	for (int i = 0; i < table->rowCount(); ++i)
 		for (int j = 0; j < table->columnCount(); ++j)
@@ -77,7 +86,7 @@ void Calculator::eval_button_clicked()
 			table->setItem(i, j, new QTableWidgetItem(QString::number(fAnswer[i * (variables.size() + operCount) + j])));
 		}
 
-//	evaluate_expression(expression, string);
+	qDebug() << "Trues: " << trues;
 	table->resizeColumnsToContents();
 	if (trues == vars_2)
 	{
@@ -88,7 +97,6 @@ void Calculator::eval_button_clicked()
 	} else
 	{
 		answer << "This expression is ";
-		qDebug() << "Trues: " << trues;
 		bool variant = ((double)trues / (double)(vars_2 - 1)) >= 0.5;
 		if (!variant)
 		{
@@ -148,12 +156,12 @@ bool Calculator::check_string_for_brackets(const QString &string)
 	return brackets == 0;
 }
 
-std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &string)
+std::vector<std::shared_ptr<ExpressionSymbol>> Calculator::expr_to_postfix(const QString &string)
 {
 	variables.clear();
 	operCount = 0;
 
-	std::vector<ExpressionSymbol *> answer;
+	std::vector<std::shared_ptr<ExpressionSymbol>> answer;
 	std::stack<Operation> operationStack;
 
 	int i = 0;
@@ -164,9 +172,9 @@ std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &strin
 		{
 			case Var:
 			{
-				answer.push_back(new Variable(sym, i));
+				answer.push_back(std::make_shared<Variable>(sym, i));
 				if (!hasVar(sym))
-					variables.push_back(Variable{sym});
+					variables.emplace_back(sym);
 				break;
 			}
 			case Oper:
@@ -177,7 +185,7 @@ std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &strin
 				{
 					if (operationStack.top().getOrder() > order)
 					{
-						answer.push_back(new Operation(operationStack.top()));
+						answer.push_back(std::make_shared<Operation>(operationStack.top()));
 						operationStack.pop();
 					} else
 						break;
@@ -194,7 +202,7 @@ std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &strin
 			{
 				while (operationStack.top().getSymbol() != '(')
 				{
-					answer.push_back(new Operation(operationStack.top()));
+					answer.push_back(std::make_shared<Operation>(operationStack.top()));
 					operationStack.pop();
 				}
 				operationStack.pop();
@@ -202,7 +210,7 @@ std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &strin
 			}
 			case Constant:
 			{
-				answer.push_back(new Variable(sym, i));
+				answer.push_back(std::make_shared<Variable>(sym, i));
 				answer[answer.size() - 1]->value = (sym == '1');
 				break;
 			}
@@ -212,7 +220,7 @@ std::vector<ExpressionSymbol *> Calculator::expr_to_postfix(const QString &strin
 
 	while (!operationStack.empty())
 	{
-		answer.push_back(new Operation(operationStack.top()));
+		answer.push_back(std::make_shared<Operation>(operationStack.top()));
 		operationStack.pop();
 	}
 
@@ -320,7 +328,7 @@ bool Calculator::check_string_for_end(const QString &string)
 	return true;
 }
 
-void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression, const QString &string)
+void Calculator::evaluate_expression(std::vector<std::shared_ptr<ExpressionSymbol>> expression, const QString &string)
 {
 	trues = 0;
 	fAnswer.clear();
@@ -337,8 +345,8 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression,
 //			qDebug() << QString(variables[j].getSymbol()) << QString::number(fAnswer[fAnswer.size() - 1]);
 		}
 		auto var_expression = change_var_to_value(expression);
-		std::stack<ExpressionSymbol *> exprStack;
-		for (ExpressionSymbol *var_expr : var_expression)
+		std::stack<std::shared_ptr<ExpressionSymbol>> exprStack;
+		for (std::shared_ptr<ExpressionSymbol>& var_expr : var_expression)
 		{
 			if (var_expr->getType() == ExpressionSymbol::Type::Var)
 			{
@@ -348,7 +356,7 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression,
 				Variable result('A');
 				if (var_expr->getSymbol() == '-')
 				{
-					result = *static_cast<Variable *>(exprStack.top());
+					result = *static_cast<Variable *>(&*exprStack.top());
 					result.positionOfStart--;
 					exprStack.pop();
 					result.value = !result.value;
@@ -358,10 +366,10 @@ void Calculator::evaluate_expression(std::vector<ExpressionSymbol *> expression,
 					exprStack.pop();
 					auto first_val = exprStack.top();
 					exprStack.pop();
-					result = calc_value(*static_cast<Variable *>(first_val), *static_cast<Variable *>(second_val),
+					result = calc_value(*static_cast<Variable *>(&*first_val), *static_cast<Variable *>(&*second_val),
 										var_expr->getSymbol());
 				}
-				exprStack.push(new Variable(result));
+				exprStack.push(std::make_shared<Variable>(result));
 				fAnswer.push_back(result.value);
 				opers++;
 			}
@@ -383,9 +391,9 @@ unsigned int Calculator::power_of_2(unsigned int pow)
 	return result;
 }
 
-std::vector<ExpressionSymbol *> Calculator::change_var_to_value(std::vector<ExpressionSymbol *> &expression)
+std::vector<std::shared_ptr<ExpressionSymbol>> Calculator::change_var_to_value(std::vector<std::shared_ptr<ExpressionSymbol>> &expression)
 {
-	for (ExpressionSymbol *expr : expression)
+	for (std::shared_ptr<ExpressionSymbol> &expr : expression)
 	{
 		if (symType(expr->getSymbol()) == Calculator::SymType::Var)
 		{
@@ -504,19 +512,20 @@ void Calculator::action_file(QString path)
 }
 
 Calculator::Calculator(QLineEdit *expr_ed, QTableWidget *tab, QLabel *answer_lab)
-	: expr_edit(expr_ed), table(tab), answer_label(answer_lab), settings_("settings.ini",QSettings::IniFormat)
+	: expr_edit(expr_ed), table(tab), answer_label(answer_lab), settings_("settings.ini", QSettings::IniFormat)
 	{
 	try
 	{
-		compute_module = std::make_unique<GPUComputeTable>();
+		compute_module = std::make_shared<GPUComputeTable>();
 	}
 	catch (...)
 	{
 		can_compute_gpu = false;
 	}
+	qDebug() << "Can compute: " << can_compute_gpu;
 }
 
-void Calculator::calculate_and_set_labels(std::vector<ExpressionSymbol *> expression, const QString &string)
+void Calculator::calculate_and_set_labels(std::vector<std::shared_ptr<ExpressionSymbol>> expression, const QString &string)
 {
 	labels.clear();
 	for (int j = 0; j < variables.size(); j++)
@@ -525,8 +534,8 @@ void Calculator::calculate_and_set_labels(std::vector<ExpressionSymbol *> expres
 		labels << QString(variables[j].getSymbol());
 	}
 	auto var_expression = change_var_to_value(expression);
-	std::stack<ExpressionSymbol *> exprStack;
-	for (ExpressionSymbol *var_expr : var_expression)
+	std::stack<std::shared_ptr<ExpressionSymbol>> exprStack;
+	for (std::shared_ptr<ExpressionSymbol> &var_expr : var_expression)
 	{
 		if (var_expr->getType() == ExpressionSymbol::Type::Var)
 		{
@@ -536,7 +545,7 @@ void Calculator::calculate_and_set_labels(std::vector<ExpressionSymbol *> expres
 			Variable result('A');
 			if (var_expr->getSymbol() == '-')
 			{
-				result = *static_cast<Variable *>(exprStack.top());
+				result = *static_cast<Variable *>(&*exprStack.top());
 				result.positionOfStart--;
 				exprStack.pop();
 				result.value = !result.value;
@@ -546,7 +555,7 @@ void Calculator::calculate_and_set_labels(std::vector<ExpressionSymbol *> expres
 				exprStack.pop();
 				auto first_val = exprStack.top();
 				exprStack.pop();
-				result = calc_value(*static_cast<Variable *>(first_val), *static_cast<Variable *>(second_val),
+				result = calc_value(*static_cast<Variable *>(&*first_val), *static_cast<Variable *>(&*second_val),
 									var_expr->getSymbol());
 			}
 			while (result.positionOfStart > 0 && result.positionOfEnd < string.length() - 1)
@@ -560,7 +569,7 @@ void Calculator::calculate_and_set_labels(std::vector<ExpressionSymbol *> expres
 					break;
 			}
 			labels << string.mid(result.positionOfStart, result.positionOfEnd - result.positionOfStart + 1);
-			exprStack.push(new Variable(result));
+			exprStack.push(std::make_shared<Variable>(result));
 		}
 	}
 	table->setHorizontalHeaderLabels(labels);

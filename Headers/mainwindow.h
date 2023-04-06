@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QThread>
 #include "GpuComputeTable.h"
+#include "gpu_settings.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -37,6 +38,8 @@ private:
 
 	Developer dev;
 
+	GPU_Settings settings_;
+
 	QThread thread;
 
 private slots:
@@ -52,6 +55,8 @@ private slots:
 	void show_error(QString);
 
 	void action_save();
+
+	void action_settings();
 
 	signals:
 	void save_signal(QString);

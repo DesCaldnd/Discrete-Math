@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "ExpressionSymbol.h"
+#include <QDebug>
 
 class Operation final : public ExpressionSymbol
 {

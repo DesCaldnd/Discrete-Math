@@ -52,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionDeveloper, &QAction::triggered, this, &MainWindow::action_developer);
 	connect(ui->actionSave_Table, &QAction::triggered, this, &MainWindow::action_save);
 	connect(this, &MainWindow::save_signal, calculator, &Calculator::action_file);
+	connect(ui->actionGPU_settings, &QAction::triggered, this, &MainWindow::action_settings);
 
 	ui->statusbar->hide();
 
@@ -104,4 +105,9 @@ void MainWindow::action_save()
 	QString path = QFileDialog::getSaveFileName(nullptr, tr("Save Table"), "/downloads/untitled.xlsx",
 												tr("Exel new table (*.xlsx);;Exel simple table (*.csv)"));
 	emit save_signal(path);
+}
+
+void MainWindow::action_settings()
+{
+	settings_.show();
 }

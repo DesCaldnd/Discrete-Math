@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 GPUComputeTable::GPUComputeTable()
 {
@@ -55,11 +56,12 @@ GPUComputeTable::GPUComputeTable()
 	std::string extensions = device.getInfo<CL_DEVICE_EXTENSIONS>();
 	std::string profile = device.getInfo<CL_DEVICE_PROFILE>();
 	unsigned long long global_mem_size = device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
-	unsigned long long local_mem_size = device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>();
+	local_mem_size = device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>();
 	unsigned int frequency = device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
 	std::string opencl_c_version = device.getInfo<CL_DEVICE_OPENCL_C_VERSION>();
 	max_group_size = device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
 	int max_compute_units = device.getInfo<	CL_DEVICE_MAX_COMPUTE_UNITS>();
+	int max_dims = device.getInfo<CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS>();
 	qDebug() << "Name: " << QString::fromStdString(name)
 			 << "\nAvailable: " << QString::number(available)
 			 << "\nVendor: " << QString::fromStdString(vendor)
@@ -72,6 +74,7 @@ GPUComputeTable::GPUComputeTable()
 			 << "\nMax compute_module units: " << QString::number(max_compute_units)
 			 << "\nFrequency: " << QString::number(frequency)
 			 << "\nOpenCL C version: " << QString::fromStdString(opencl_c_version)
+			 << "\nMax dimensions " << QString::number(max_dims)
 			 << "\nExtensions: " << QString::fromStdString(extensions)
 			 << "\n";
 
@@ -81,7 +84,7 @@ GPUComputeTable::GPUComputeTable()
 	};
 	context_ = std::make_unique<cl::Context>(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, properties);
 
-	std::ifstream kernel_file("../Kernels/TableComputeKernel.clcpp");
+	std::ifstream kernel_file("../Kernels/TableComputeKernel.cl");
 	std::ostringstream sstr;
 	sstr << kernel_file.rdbuf();
 	std::string code = sstr.str();
@@ -91,7 +94,8 @@ GPUComputeTable::GPUComputeTable()
 	sources.push_back({code.c_str(), code.length()});
 	try
 	{
-		program_ = std::make_unique<cl::Program>(*context_, sstr.str(), true);
+		program_ = std::make_unique<cl::Program>(*context_, sstr.str(), false);
+		program_->build("-cl-std=CL2.0");
 	} catch (cl::BuildError &err) {
 		std::cerr << "OCL BUILD ERROR: " << err.err() << ":" << err.what()
 				  << std::endl;
@@ -113,18 +117,25 @@ GPUComputeTable::GPUComputeTable()
 	qDebug() << "Kernel code: " << QString::fromStdString(code);
 
 	command_queue_ = std::make_unique<cl::CommandQueue>(*context_, device);
+
+	process_vecs = std::make_unique<cl::KernelFunctor<cl::Buffer, int, cl::Buffer, int, int, cl::Buffer, cl::Buffer,
+					  cl::LocalSpaceArg, cl::LocalSpaceArg>>(*program_, "compute_table");
 }
 
 void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable> &variables,
-						  const std::vector<ExpressionSymbol*> &expression, const int operCount, unsigned int &trues)
+						  const std::vector<std::shared_ptr<ExpressionSymbol>> &expression, const int operCount, unsigned int &trues)
 {
 	trues = 0;
 	unsigned int vars_2 = power_of_2(variables.size());
-	int group_size = vars_2 < max_group_size ? vars_2 : max_group_size;
-	cl::Buffer vars_buf(*context_, CL_MEM_READ_WRITE, sizeof(ES) * variables.size());
-	cl::Buffer expr_buf(*context_, CL_MEM_READ_WRITE, sizeof(ES) * expression.size());
-	cl::Buffer trues_buf(*context_, CL_MEM_READ_WRITE, sizeof(unsigned int));
-	cl::Buffer answer_buf(*context_, CL_MEM_READ_WRITE, sizeof(bool) * vars_2 * (variables.size() + operCount));
+	unsigned int max_local_group_size_on_memory = align(local_mem_size / (sizeof(ES) * (variables.size() + expression.size() - operCount)));
+	unsigned int group_size = std::min(max_local_group_size_on_memory, std::min(vars_2, max_group_size));
+	qDebug() << "Max on memory: " << max_local_group_size_on_memory;
+//	qDebug() << "Bottom: " << sizeof(ES) * (variables.size() + expression.size() - operCount);
+	qDebug() << "Group size: " << group_size;
+	cl::Buffer vars_buf(*context_, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, sizeof(ES) * variables.size());
+	cl::Buffer expr_buf(*context_, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, sizeof(ES) * expression.size());
+	cl::Buffer trues_buf(*context_, CL_MEM_WRITE_ONLY, sizeof(unsigned int));
+	cl::Buffer answer_buf(*context_, CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY, sizeof(bool) * vars_2 * (variables.size() + operCount));
 
 	std::vector<ES> struct_vars{variables.size()};
 	std::vector<ES> struct_expr{expression.size()};
@@ -147,14 +158,14 @@ void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable>
 	cl::NDRange GlobalRange{vars_2};
 	cl::NDRange LocalRange{(unsigned long long)group_size};
 	cl::EnqueueArgs Args{*command_queue_, GlobalRange, LocalRange};
-	cl::KernelFunctor<cl::Buffer, int, cl::Buffer, int, int, cl::Buffer, cl::Buffer,
-		cl::LocalSpaceArg, cl::LocalSpaceArg> process_vecs{*program_, "compute_table"};
 
-	cl::Event evt = process_vecs(Args, vars_buf, variables.size(), expr_buf, expression.size(), operCount, trues_buf,
-								 answer_buf, cl::Local(sizeof(ES) * expression.size() * group_size),
+	qDebug() << "Variables cache size: " << sizeof(ES) * variables.size() * group_size;
+	qDebug() << "Expression stack size: " << sizeof(ES) * (expression.size() - operCount) * group_size;
+
+
+	cl::Event evt = (*process_vecs)(Args, vars_buf, variables.size(), expr_buf, expression.size(), operCount, trues_buf,
+								 answer_buf, cl::Local(sizeof(ES) * (expression.size() - operCount) * group_size),
 								 cl::Local(sizeof(ES) * variables.size() * group_size));
-	result.clear();
-	result.reserve(vars_2 * (variables.size() + operCount));
 	result.resize(vars_2 * (variables.size() + operCount), true);
 	evt.wait();
 
@@ -162,15 +173,22 @@ void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable>
 	cl::copy(*command_queue_, trues_buf, &trues, (&trues) + 1);
 }
 
-GPUComputeTable::~GPUComputeTable()
-{}
-
 unsigned int GPUComputeTable::power_of_2(unsigned int pow)
 {
 	unsigned long long result = 1;
 	for (int i = 0; i < pow; i++)
 	{
 		result *= 2u;
+	}
+	return result;
+}
+
+unsigned int GPUComputeTable::align(unsigned int num)
+{
+	unsigned int result = 1;
+	while (result * 2 < num)
+	{
+		result *= 2;
 	}
 	return result;
 }

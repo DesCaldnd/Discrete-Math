@@ -37,15 +37,15 @@ class Calculator final : public QObject
 
 	static bool check_string_for_end(const QString&);
 
-	std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
+	std::vector<std::shared_ptr<ExpressionSymbol>> expr_to_postfix(const QString&);
 
-	void evaluate_expression(std::vector<ExpressionSymbol*>, const QString&);
+	void evaluate_expression(std::vector<std::shared_ptr<ExpressionSymbol>>, const QString&);
 
 	bool hasVar(char);
 
 	static unsigned int power_of_2(unsigned int);
 
-	std::vector<ExpressionSymbol*> change_var_to_value(std::vector<ExpressionSymbol*>&);
+	std::vector<std::shared_ptr<ExpressionSymbol>> change_var_to_value(std::vector<std::shared_ptr<ExpressionSymbol>>&);
 
 	bool value_of_var(char);
 
@@ -76,7 +76,7 @@ class Calculator final : public QObject
 
 	unsigned int trues;
 
-	std::unique_ptr<GPUComputeTable> compute_module;
+	std::shared_ptr<GPUComputeTable> compute_module;
 
 	bool can_compute_gpu = true;
 
@@ -84,7 +84,7 @@ class Calculator final : public QObject
 
 	int min_variables_for_gpu = 10;
 
-	void calculate_and_set_labels(std::vector<ExpressionSymbol*>, const QString&);
+	void calculate_and_set_labels(std::vector<std::shared_ptr<ExpressionSymbol>>, const QString&);
 
 	QSettings settings_;
 

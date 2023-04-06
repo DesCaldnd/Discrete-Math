@@ -22,10 +22,10 @@ public:
 
 	GPUComputeTable();
 
-	void run(std::vector<bool> &result, const std::vector<Variable> &variables, const std::vector<ExpressionSymbol*> &expression,
+	void run(std::vector<bool> &result, const std::vector<Variable> &variables, const std::vector<std::shared_ptr<ExpressionSymbol>> &expression,
 			 const int operCount, unsigned int &trues);
 
-	~GPUComputeTable();
+	~GPUComputeTable()=default;
 
 private:
 
@@ -47,7 +47,14 @@ private:
 
 	std::unique_ptr<cl::Context> context_;
 
-	int max_group_size;
+	std::unique_ptr<cl::KernelFunctor<cl::Buffer, int, cl::Buffer, int, int, cl::Buffer, cl::Buffer,
+									  cl::LocalSpaceArg, cl::LocalSpaceArg>> process_vecs;
+
+	unsigned int max_group_size;
+
+	unsigned int local_mem_size;
+
+	unsigned int align(unsigned int num);
 };
 
 #endif //DISCRETEMATH_HEADERS_GPUCOMPUTETABLE_H_
