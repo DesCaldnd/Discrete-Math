@@ -8,6 +8,8 @@ struct ExpressionSymbol
 	enum Type type;
 };
 
+int stack_index = -1;
+
 unsigned int power_of_2(int power)
 {
 	unsigned int result = 1;
@@ -17,14 +19,12 @@ unsigned int power_of_2(int power)
 	return result;
 }
 
-
 __kernel void compute_table(__global struct ExpressionSymbol* variables, int var_count, __global struct ExpressionSymbol* expression, int expr_sym_count, int oper_count,
 	__global unsigned int* trues, __global bool* fAnswer, __local struct ExpressionSymbol* stack, __local struct ExpressionSymbol* vars_init)
 {
 	int gid = get_global_id(0);
 	int lid = get_local_id(0);
 	int width = var_count + oper_count;
-	int stack_index = -1;
 	int oper = 0;
 	unsigned int vars_2 = power_of_2(var_count);
 	
@@ -33,6 +33,7 @@ __kernel void compute_table(__global struct ExpressionSymbol* variables, int var
 		struct ExpressionSymbol var = variables[i];
 		var.Value = (1u << (var_count - i - 1)) & gid;
 		vars_init[var_count * lid + i] = var;
+		fAnswer[(vars_2 - gid - 1) * width + i] = var.Value;
 	}
 	
 	for (int i = 0; i < expr_sym_count; ++i)
@@ -52,7 +53,6 @@ __kernel void compute_table(__global struct ExpressionSymbol* variables, int var
 					break;
 				}
 			}
-			fAnswer[(vars_2 - gid - 1) * width + i] = var.Value;
 			stack[(expr_sym_count - oper_count) * lid + stack_index] = var;
 		} else
 		{

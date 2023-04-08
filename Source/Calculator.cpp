@@ -56,8 +56,7 @@ void Calculator::eval_button_clicked()
 	min_variables_for_gpu = settings_.value("vars", 10).toInt();
 	settings_.endGroup();
 
-	qDebug() << "Use GPU: " << use_gpu;
-	qDebug() << "Min vars for GPU: " << min_variables_for_gpu;
+	qDebug() << "Expr size: " << expression.size();
 
 	if (variables.size() >= min_variables_for_gpu && can_compute_gpu && use_gpu)
 	{
@@ -70,6 +69,9 @@ void Calculator::eval_button_clicked()
 		qDebug() << "CPU compute module used";
 	}
 	unsigned int vars_2 = power_of_2(variables.size());
+
+	table->horizontalScrollBar()->setValue(0);
+	table->verticalScrollBar()->setValue(0);
 	table->setRowCount(vars_2);
 	table->setColumnCount(variables.size() + operCount);
 
@@ -237,6 +239,8 @@ Calculator::SymType Calculator::symType(char symbol)
 		return Calculator::SymType::CloseBracket;
 	else if (symbol == '1' || symbol == '0')
 		return Calculator::SymType::Constant;
+	else if (symbol == ' ')
+		return Calculator::SymType::Space;
 	return Calculator::SymType::Oper;
 }
 
@@ -261,11 +265,11 @@ bool Calculator::check_string_for_operators(const QString &string)
 			if (isOperator)
 				return false;
 			isOperator = true;
-		} else if (sym != '-')
+		}else if (sym != '-' && sym != ' ')
 		{
 			isOperator = false;
 			isMinus = false;
-		} else
+		} else if (sym == '-')
 		{
 			if (isMinus)
 				return false;
@@ -315,7 +319,15 @@ bool Calculator::check_string_for_end(const QString &string)
 				hasFirstOperand = true;
 				break;
 			}
-			default:
+			case Var:
+			{
+				if (hasFirstOperand)
+					return false;
+				hasFirstOperand = true;
+				isOper = false;
+				break;
+			}
+			case Constant:
 			{
 				if (hasFirstOperand)
 					return false;
@@ -334,7 +346,6 @@ void Calculator::evaluate_expression(std::vector<std::shared_ptr<ExpressionSymbo
 	fAnswer.clear();
 	unsigned int vars_2 = power_of_2(variables.size());
 	fAnswer.reserve(vars_2 * (variables.size() + operCount));
-	labels.clear();
 	for (unsigned int i = vars_2; i > 0; i--)
 	{
 		int opers = 0;
@@ -560,7 +571,13 @@ void Calculator::calculate_and_set_labels(std::vector<std::shared_ptr<Expression
 			}
 			while (result.positionOfStart > 0 && result.positionOfEnd < string.length() - 1)
 			{
-				if (string[result.positionOfStart - 1].toLatin1() == '('
+				if (string[result.positionOfStart - 1].toLatin1() == ' ')
+				{
+					result.positionOfStart--;
+				} else if(string[result.positionOfEnd + 1].toLatin1() == ' ')
+				{
+					result.positionOfEnd++;
+				} else if (string[result.positionOfStart - 1].toLatin1() == '('
 					&& string[result.positionOfEnd + 1].toLatin1() == ')')
 				{
 					result.positionOfStart--;

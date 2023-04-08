@@ -15,6 +15,7 @@
 #include <QThread>
 #include "GpuComputeTable.h"
 #include "gpu_settings.h"
+#include <memory>
 
 
 QT_BEGIN_NAMESPACE
@@ -34,7 +35,7 @@ public:
 private:
     Ui::MainWindow *ui;
 
-	Calculator* calculator = nullptr;
+	std::unique_ptr<Calculator> calculator;
 
 	Developer dev;
 

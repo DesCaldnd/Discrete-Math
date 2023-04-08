@@ -130,7 +130,6 @@ void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable>
 	unsigned int max_local_group_size_on_memory = align(local_mem_size / (sizeof(ES) * (variables.size() + expression.size() - operCount)));
 	unsigned int group_size = std::min(max_local_group_size_on_memory, std::min(vars_2, max_group_size));
 	qDebug() << "Max on memory: " << max_local_group_size_on_memory;
-//	qDebug() << "Bottom: " << sizeof(ES) * (variables.size() + expression.size() - operCount);
 	qDebug() << "Group size: " << group_size;
 	cl::Buffer vars_buf(*context_, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, sizeof(ES) * variables.size());
 	cl::Buffer expr_buf(*context_, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, sizeof(ES) * expression.size());
@@ -140,15 +139,19 @@ void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable>
 	std::vector<ES> struct_vars{variables.size()};
 	std::vector<ES> struct_expr{expression.size()};
 
+	qDebug() << "Oper count:" << operCount;
+
 	for(int i = 0; i < variables.size(); ++i)
 	{
 		struct_vars[i].Symbol = variables[i].getSymbol();
 		struct_vars[i].type = ES::Type::Var;
+//		qDebug() << struct_vars[i].Symbol;
 	}
 	for(int i = 0; i < expression.size(); ++i)
 	{
 		struct_expr[i].Symbol = expression[i]->getSymbol();
 		struct_expr[i].type = (ES::Type)(int)expression[i]->getType();
+		qDebug() << struct_expr[i].Symbol << ":" << struct_expr[i].type;
 	}
 
 	cl::copy(*command_queue_, struct_vars.begin(), struct_vars.end(), vars_buf);

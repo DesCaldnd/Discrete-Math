@@ -59,7 +59,7 @@ class Calculator final : public QObject
 
 	enum SymType
 	{
-		Var, Oper, OpenBracket, CloseBracket, Constant
+		Var, Oper, OpenBracket, CloseBracket, Constant, Space
 	};
 
 	static SymType symType(char);

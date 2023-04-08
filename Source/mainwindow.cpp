@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //	thread = new QThread();
 
-	calculator = new Calculator(ui->expr_edit, ui->table, ui->answer_label);
+	calculator = std::make_unique<Calculator>(ui->expr_edit, ui->table, ui->answer_label);
 
 	calculator->moveToThread(&thread);
 
@@ -27,13 +27,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	errorMessageBox.setWindowTitle("Error");
 
-	auto *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/]*"}, this};
+	auto *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/ ]*"}, this};
 	ui->expr_edit->setValidator(validator);
 
-	connect(ui->eval_button, &QPushButton::clicked, calculator, &Calculator::eval_button_clicked);
-	connect(ui->expr_edit, &QLineEdit::returnPressed, calculator, &Calculator::eval_button_clicked);
+	connect(ui->eval_button, &QPushButton::clicked, &*calculator, &Calculator::eval_button_clicked);
+	connect(ui->expr_edit, &QLineEdit::returnPressed, &*calculator, &Calculator::eval_button_clicked);
 
-	connect(calculator, &Calculator::expr_error, this, &MainWindow::show_error);
+	connect(&*calculator, &Calculator::expr_error, this, &MainWindow::show_error);
 
 	connect(ui->actionClear_expression, &QAction::triggered, this, &MainWindow::action_clear_expression);
 	connect(ui->actionNegative, &QAction::triggered, [&]() { action_insert('-'); });
@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionBackspace, &QAction::triggered, this, &MainWindow::action_backspace);
 	connect(ui->actionDeveloper, &QAction::triggered, this, &MainWindow::action_developer);
 	connect(ui->actionSave_Table, &QAction::triggered, this, &MainWindow::action_save);
-	connect(this, &MainWindow::save_signal, calculator, &Calculator::action_file);
+	connect(this, &MainWindow::save_signal, &*calculator, &Calculator::action_file);
 	connect(ui->actionGPU_settings, &QAction::triggered, this, &MainWindow::action_settings);
 
 	ui->statusbar->hide();
@@ -61,7 +61,6 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
 	delete ui;
-	delete calculator;
 	thread.exit();
 }
 
