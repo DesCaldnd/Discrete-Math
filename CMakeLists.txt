@@ -17,7 +17,7 @@ if (MSVC)
 endif ()
 
 
-#set(QXlsxQt6_DIR "C://Program Files (x86)/QXlsx/lib/cmake/QXlsxQt6")
+set(QXlsxQt6_DIR "C://Program Files (x86)/QXlsx/lib/cmake/QXlsxQt6")
 
 find_package(Qt6 COMPONENTS
         Core
@@ -52,6 +52,12 @@ target_link_libraries(DiscreteMath
         OpenCL::OpenCL
         )
 
+
+add_custom_command(
+        TARGET DiscreteMath POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/style/Diffnes.qss
+        ${CMAKE_CURRENT_BINARY_DIR}/style/Diffnes.qss)
 
 if (WIN32)
     set(DEBUG_SUFFIX)

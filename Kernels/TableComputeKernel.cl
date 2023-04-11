@@ -42,16 +42,20 @@ __kernel void compute_table(__global struct ExpressionSymbol* variables, int var
 		{
 			++stack_index;
 			struct ExpressionSymbol var;
-			var.type = Var;
-			bool val;
 			char sym = expression[i].Symbol;
-			for (int j = 0; j < var_count; ++j)
+			if (sym != '1' && sym != '0')
 			{
-				if (vars_init[var_count * lid + j].Symbol == sym)
-				{
-					var.Value = vars_init[var_count * lid + j].Value;
-					break;
-				}
+                for (int j = 0; j < var_count; ++j)
+                {
+                    if (vars_init[var_count * lid + j].Symbol == sym)
+                    {
+                        var.Value = vars_init[var_count * lid + j].Value;
+                        break;
+                    }
+                }
+			} else
+			{
+			    var.Value = expression[i].Value;
 			}
 			stack[(expr_sym_count - oper_count) * lid + stack_index] = var;
 		} else
@@ -105,8 +109,8 @@ __kernel void compute_table(__global struct ExpressionSymbol* variables, int var
 				++stack_index;
 				stack[(expr_sym_count - oper_count) * lid + stack_index] = var_1;
 				fAnswer[(vars_2 - gid - 1) * width + var_count + oper] = var_1.Value;
-				++oper;
 			}
+			++oper;
 		}
 	}
 	if (fAnswer[(vars_2 - gid - 1) * width + var_count + oper_count - 1] == true)

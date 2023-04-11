@@ -151,7 +151,8 @@ void GPUComputeTable::run(std::vector<bool> &result, const std::vector<Variable>
 	{
 		struct_expr[i].Symbol = expression[i]->getSymbol();
 		struct_expr[i].type = (ES::Type)(int)expression[i]->getType();
-		qDebug() << struct_expr[i].Symbol << ":" << struct_expr[i].type;
+        struct_expr[i].Value = expression[i]->value;
+		qDebug() << struct_expr[i].Symbol << ":" << struct_expr[i].type << ":" << struct_expr[i].Value;
 	}
 
 	cl::copy(*command_queue_, struct_vars.begin(), struct_vars.end(), vars_buf);
