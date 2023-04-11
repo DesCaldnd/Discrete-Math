@@ -7,6 +7,7 @@
 
 #include "ExpressionSymbol.h"
 #include <compare>
+#include <QDebug>
 
 class Variable final : public ExpressionSymbol{
     Type type = ExpressionSymbol::Type::Var;
@@ -29,6 +30,8 @@ public:
 	auto operator<=>(const Variable &other){
 		return this->getSymbol() <=> other.getSymbol();
 	}
+
+	~Variable() override =default;
 };
 
 
