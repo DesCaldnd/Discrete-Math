@@ -23,7 +23,10 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        LinguistTools
         REQUIRED)
+qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} lev-ru.ts)
+#configure_file(${QM_FILES} ${CMAKE_SOURCE_DIR} COPYONLY)
 
 find_package(QXlsxQt6 REQUIRED)
 
@@ -42,11 +45,12 @@ set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/Gpu
 add_executable(DiscreteMath ${RELEASE_EXECUTABLE} main.cpp Source/mainwindow.cpp Headers/mainwindow.h
         Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp
         Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS}
-        Source/Calculator.cpp Headers/Calculator.h Source/developer.cpp Headers/developer.h Source/developer.ui)
+        Source/Calculator.cpp Headers/Calculator.h Source/developer.cpp Headers/developer.h Source/developer.ui ${QM_FILES})
 target_link_libraries(DiscreteMath
         Qt::Core
         Qt::Gui
         Qt::Widgets
+#        Qt::LinguistTools
         QXlsx::QXlsx
         Threads::Threads
         OpenCL::OpenCL

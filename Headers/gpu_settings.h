@@ -29,10 +29,16 @@ private slots:
 
 	void button_pushed();
 
+    void language_changed(int);
+
 private:
 	Ui::GPU_Settings *ui;
 
 	QSettings settings_;
+
+    QString language;
+
+    QString language_settings;
 };
 
 #endif //DISCRETEMATH_HEADERS_GPU_SETTINGS_H_

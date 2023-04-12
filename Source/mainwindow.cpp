@@ -20,9 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //	thread = new QThread();
 
 	calculator = std::make_unique<Calculator>(ui->expr_edit, ui->table, ui->answer_label);
-
 	calculator->moveToThread(&thread);
-
 	thread.start();
 
 	errorMessageBox.setWindowTitle("Error");
@@ -101,7 +99,7 @@ void MainWindow::show_error(QString text)
 
 void MainWindow::action_save()
 {
-	QString path = QFileDialog::getSaveFileName(nullptr, tr("Save Table"), "/downloads/untitled.xlsx",
+	QString path = QFileDialog::getSaveFileName(nullptr, tr("Save Table"), "C:/Users/%username%/Downloads/untitled",
 												tr("Exel new table (*.xlsx);;Exel simple table (*.csv)"));
 	emit save_signal(path);
 }
