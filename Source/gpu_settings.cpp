@@ -19,12 +19,30 @@ GPU_Settings::GPU_Settings(QWidget *parent) :
 	connect(ui->pushButton, &QPushButton::clicked, this, &GPU_Settings::button_pushed);
     connect(ui->language_box, &QComboBox::currentIndexChanged, this, &GPU_Settings::language_changed);
 
+    ui->language_box->addItem("English");
+    ui->language_box->addItem("Russian");
+
+
 	settings_.beginGroup("gpu");
 	ui->checkBox->setCheckState(settings_.value("use", true).toBool() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
 	ui->spinBox->setValue(settings_.value("vars", 10).toInt());
     language_settings = settings_.value("lang", "en").toString();
     language = language_settings;
 	settings_.endGroup();
+
+    switch (language)
+    {
+        case "en":
+        {
+            ui->language_box->setCurrentIndex(0);
+            break;
+        }
+        case "ru":
+        {
+            ui->language_box->setCurrentIndex(1);
+            break;
+        }
+    }
 }
 
 GPU_Settings::~GPU_Settings()
@@ -52,6 +70,9 @@ void GPU_Settings::button_pushed()
 {
     if (language_settings != language)
     {
+        settings_.beginGroup("gpu");
+        settings_.setValue("lang", language);
+        settings_.endGroup();
         QTranslator translator;
         translator.load(QString("lev-") + language);
         QApplication::instance()->installTranslator(&translator);

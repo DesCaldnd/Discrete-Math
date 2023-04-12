@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QTranslator>
 #include <QDebug>
+#include <QSettings>
 
 #define ORGANIZATION_NAME "DesCaldnd Studios, Inc."
 #define ORGANIZATION_DOMAIN "https://www.example.com/"
@@ -15,8 +16,15 @@ int main(int argc, char *argv[]) {
     a.setOrganizationDomain(ORGANIZATION_DOMAIN);
     a.setApplicationName(APPLICATION_NAME);
 
+    QString lang;
+    QSettings settings_("settings.ini", QSettings::IniFormat);
+
+    settings_.beginGroup("gpu");
+    lang = settings_.value("lang", "en").toString();
+    settings_.endGroup();
+
     QTranslator translator;
-    translator.load(QString("lev-") + QLocale::system().uiLanguages()[2]);
+    translator.load(QString("lev-") + lang);
     a.installTranslator(&translator);
 
     QFile styleFile("./style/Diffnes.qss");

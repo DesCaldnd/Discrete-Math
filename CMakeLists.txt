@@ -25,7 +25,7 @@ find_package(Qt6 COMPONENTS
         Widgets
         LinguistTools
         REQUIRED)
-qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} lev-ru.ts)
+qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} lev-ru.ts lev-en.ts)
 #configure_file(${QM_FILES} ${CMAKE_SOURCE_DIR} COPYONLY)
 
 find_package(QXlsxQt6 REQUIRED)
