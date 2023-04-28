@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	errorMessageBox.setWindowTitle("Error");
 
-	auto *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/ ]*"}, this};
+	auto *validator = new QRegularExpressionValidator{QRegularExpression{"[A-Za-z10()\\-&|<~+\\/ ,]*"}, this};
 	ui->expr_edit->setValidator(validator);
 
 	connect(ui->eval_button, &QPushButton::clicked, &*calculator, &Calculator::eval_button_clicked);

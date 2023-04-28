@@ -12,6 +12,7 @@
 #include "../Headers/Operation.h"
 #include "xlsxdocument.h"
 #include <QScrollBar>
+#include <exception>
 
 void Calculator::eval_button_clicked()
 {
@@ -42,7 +43,14 @@ void Calculator::eval_button_clicked()
 		emit expr_error("This expression is not completed");
 		return;
 	}
-	expression = expr_to_postfix(string);
+	try
+	{
+		expression = expr_to_postfix(string);
+	} catch (std::runtime_error &e)
+	{
+		emit expr_error(e.what());
+		return;
+	}
 	if (variables.size() > 19)
 	{
 		emit expr_error("Too many variables (max=19)");
@@ -152,6 +160,9 @@ bool Calculator::check_string_for_brackets(const QString &string)
 			brackets++;
 		else if (qSym == ')')
 			brackets--;
+		else if (qSym == ',')
+			if  (brackets != 0)
+				return false;
 		if (brackets < 0)
 			return false;
 	}
@@ -216,6 +227,15 @@ std::vector<std::shared_ptr<ExpressionSymbol>> Calculator::expr_to_postfix(const
 				answer[answer.size() - 1]->value = (sym == '1');
 				break;
 			}
+			case Separator:
+			{
+				while (!operationStack.empty())
+				{
+					answer.push_back(std::make_shared<Operation>(operationStack.top()));
+					operationStack.pop();
+				}
+				break;
+			}
 		}
 		i++;
 	}
@@ -241,6 +261,8 @@ Calculator::SymType Calculator::symType(char symbol)
 		return Calculator::SymType::Constant;
 	else if (symbol == ' ')
 		return Calculator::SymType::Space;
+	else if (symbol == ',')
+		return Calculator::SymType::Separator;
 	return Calculator::SymType::Oper;
 }
 
@@ -274,6 +296,10 @@ bool Calculator::check_string_for_operators(const QString &string)
 			if (isMinus)
 				return false;
 			isMinus = true;
+		} else if (sym == ',')
+		{
+			if (isMinus || isOperator)
+				return false;
 		}
 	}
 	return !(isMinus || isOperator);
@@ -333,6 +359,13 @@ bool Calculator::check_string_for_end(const QString &string)
 					return false;
 				hasFirstOperand = true;
 				isOper = false;
+				break;
+			}
+			case Separator:
+			{
+				if (!hasFirstOperand || isOper)
+					return false;
+				hasFirstOperand = false;
 				break;
 			}
 		}
