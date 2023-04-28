@@ -88,6 +88,8 @@ class Calculator final : public QObject
 
 	QSettings settings_;
 
+	bool mult_exprs = false;
+
  signals:
 
 	void expr_error(QString error);

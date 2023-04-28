@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionA, &QAction::triggered, [&]() { action_insert('A'); });
 	connect(ui->actionB, &QAction::triggered, [&]() { action_insert('B'); });
 	connect(ui->actionC, &QAction::triggered, [&]() { action_insert('C'); });
+	connect(ui->actionSeparator, &QAction::triggered, [&]() { action_insert(','); });
 	connect(ui->actionBackspace, &QAction::triggered, this, &MainWindow::action_backspace);
 	connect(ui->actionDeveloper, &QAction::triggered, this, &MainWindow::action_developer);
 	connect(ui->actionSave_Table, &QAction::triggered, this, &MainWindow::action_save);

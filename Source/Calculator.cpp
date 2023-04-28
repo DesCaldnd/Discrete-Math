@@ -12,7 +12,6 @@
 #include "../Headers/Operation.h"
 #include "xlsxdocument.h"
 #include <QScrollBar>
-#include <exception>
 
 void Calculator::eval_button_clicked()
 {
@@ -43,14 +42,11 @@ void Calculator::eval_button_clicked()
 		emit expr_error("This expression is not completed");
 		return;
 	}
-	try
-	{
-		expression = expr_to_postfix(string);
-	} catch (std::runtime_error &e)
-	{
-		emit expr_error(e.what());
-		return;
-	}
+
+	mult_exprs = false;
+
+	expression = expr_to_postfix(string);
+
 	if (variables.size() > 19)
 	{
 		emit expr_error("Too many variables (max=19)");
@@ -70,8 +66,7 @@ void Calculator::eval_button_clicked()
 	{
 		compute_module->run(fAnswer, variables, expression, operCount, trues);
 		qDebug() << "GPU compute module used";
-	}
-	else
+	} else
 	{
 		evaluate_expression(expression, string);
 		qDebug() << "CPU compute module used";
@@ -93,11 +88,19 @@ void Calculator::eval_button_clicked()
 	for (int i = 0; i < table->rowCount(); ++i)
 		for (int j = 0; j < table->columnCount(); ++j)
 		{
-			table->setItem(i, j, new QTableWidgetItem(QString::number(fAnswer[i * (variables.size() + operCount) + j])));
+			table
+				->setItem(i, j, new QTableWidgetItem(QString::number(fAnswer[i * (variables.size() + operCount) + j])));
 		}
 
 	qDebug() << "Trues: " << trues;
 	table->resizeColumnsToContents();
+
+	if (mult_exprs)
+	{
+		answer_label->setText("");
+		return;
+	}
+
 	if (trues == vars_2)
 	{
 		answer << "This expression is absolute true";
@@ -229,6 +232,7 @@ std::vector<std::shared_ptr<ExpressionSymbol>> Calculator::expr_to_postfix(const
 			}
 			case Separator:
 			{
+				mult_exprs = true;
 				while (!operationStack.empty())
 				{
 					answer.push_back(std::make_shared<Operation>(operationStack.top()));

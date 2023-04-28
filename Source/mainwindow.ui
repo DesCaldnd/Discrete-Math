@@ -114,6 +114,8 @@
     <addaction name="actionClose_Bracket"/>
     <addaction name="separator"/>
     <addaction name="actionBackspace"/>
+    <addaction name="separator"/>
+    <addaction name="actionSeparator"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -165,6 +167,8 @@
    <addaction name="actionClose_Bracket"/>
    <addaction name="separator"/>
    <addaction name="actionBackspace"/>
+   <addaction name="separator"/>
+   <addaction name="actionSeparator"/>
   </widget>
   <action name="actionSave_Table">
    <property name="icon">
@@ -341,6 +345,16 @@
    </property>
    <property name="toolTip">
     <string>GPU Settings</string>
+   </property>
+  </action>
+  <action name="actionSeparator">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Separator.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Separator</string>
    </property>
   </action>
  </widget>

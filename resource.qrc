@@ -18,6 +18,7 @@
         <file>images/About.png</file>
         <file>images/File.png</file>
         <file>images/Negative.png</file>
+        <file>images/Separator.png</file>
     </qresource>
     <qresource prefix="/style">
         <file>style/Diffnes.qss</file>
