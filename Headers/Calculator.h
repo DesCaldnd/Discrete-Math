@@ -13,6 +13,9 @@
 #include <QTableWidget>
 #include <QLabel>
 #include <QLineEdit>
+#include "GpuComputeTable.h"
+#include <memory>
+#include <QSettings>
 
 class Calculator final : public QObject
 {
@@ -34,15 +37,15 @@ class Calculator final : public QObject
 
 	static bool check_string_for_end(const QString&);
 
-	std::vector<ExpressionSymbol*> expr_to_postfix(const QString&);
+	std::vector<std::shared_ptr<ExpressionSymbol>> expr_to_postfix(const QString&);
 
-	void evaluate_expression(std::vector<ExpressionSymbol*>, const QString&);
+	void evaluate_expression(std::vector<std::shared_ptr<ExpressionSymbol>>, const QString&);
 
 	bool hasVar(char);
 
 	static unsigned int power_of_2(unsigned int);
 
-	std::vector<ExpressionSymbol*> change_var_to_value(std::vector<ExpressionSymbol*>&);
+	std::vector<std::shared_ptr<ExpressionSymbol>> change_var_to_value(std::vector<std::shared_ptr<ExpressionSymbol>>&);
 
 	bool value_of_var(char);
 
@@ -50,13 +53,13 @@ class Calculator final : public QObject
 
 	std::vector<Variable> variables{};
 
-	std::vector<std::vector<bool>> fAnswer;
+	std::vector<bool> fAnswer;
 
 	QStringList labels;
 
 	enum SymType
 	{
-		Var, Oper, OpenBracket, CloseBracket, Constant
+		Var, Oper, OpenBracket, CloseBracket, Constant, Space, Separator
 	};
 
 	static SymType symType(char);
@@ -72,6 +75,20 @@ class Calculator final : public QObject
 	QLabel* answer_label = nullptr;
 
 	unsigned int trues;
+
+	std::shared_ptr<GPUComputeTable> compute_module;
+
+	bool can_compute_gpu = true;
+
+	bool use_gpu = true;
+
+	int min_variables_for_gpu = 10;
+
+	void calculate_and_set_labels(std::vector<std::shared_ptr<ExpressionSymbol>>, const QString&);
+
+	QSettings settings_;
+
+	bool mult_exprs = false;
 
  signals:
 

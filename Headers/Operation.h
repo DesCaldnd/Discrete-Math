@@ -7,31 +7,34 @@
 
 #include <vector>
 #include "ExpressionSymbol.h"
+#include <QDebug>
 
-class Operation final : public ExpressionSymbol{
+class Operation final : public ExpressionSymbol
+{
 
-    void setIndex(int) override;
+	void setIndex(int) override;
 
-    static const std::vector<proxy> ORDER_LIST;
+	static const std::vector<proxy> ORDER_LIST;
 
-    Type type = ExpressionSymbol::Type::Oper;
+	Type type = ExpressionSymbol::Type::Oper;
+
 public:
 
+	void setSymbol(char) override;
 
-    void setSymbol(char) override;
+	char getSymbol() const override;
 
-    char getSymbol() const override;
+	ExpressionSymbol::Type getType() override;
 
-    ExpressionSymbol::Type getType() override;
+	static int order(char);
 
-    static int order(char);
+	int getOrder();
 
-    int getOrder();
+	Operation(char);
 
-    Operation(char);
+	Operation(char, int);
 
-    Operation(char, int);
+	~Operation() override = default;
 };
-
 
 #endif //DISCRETEMATH_OPERATION_H

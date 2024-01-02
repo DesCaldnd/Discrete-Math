@@ -6,6 +6,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+find_package(OpenCL REQUIRED)
+
 set(CMAKE_PREFIX_PATH "C:/Qt/6.4.2/mingw_64/lib/cmake")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
@@ -15,7 +17,7 @@ if (MSVC)
 endif ()
 
 
-#set(QXlsxQt6_DIR "C://Program Files (x86)/QXlsx/lib/cmake/QXlsxQt6")
+set(QXlsxQt6_DIR "C://Program Files (x86)/QXlsx/lib/cmake/QXlsxQt6")
 
 find_package(Qt6 COMPONENTS
         Core
@@ -33,7 +35,10 @@ if(CMAKE_BUILD_TYPE MATCHES "Release")
     set(RELEASE_EXECUTABLE WIN32)
 endif()
 
-set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc")
+include_directories("Kernels")
+include_directories("style")
+
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appico.rc" Source/GpuComputeTable.cpp Headers/GpuComputeTable.h Source/gpu_settings.cpp Headers/gpu_settings.h Source/gpu_settings.ui)
 add_executable(DiscreteMath ${RELEASE_EXECUTABLE} main.cpp Source/mainwindow.cpp Headers/mainwindow.h
         Source/mainwindow.ui Source/Operation.cpp Headers/Operation.h Source/ExpressionSymbol.cpp
         Headers/ExpressionSymbol.h Source/Variable.cpp Headers/Variable.h resource.qrc ${APP_ICON_RESOURCE_WINDOWS}
@@ -44,8 +49,15 @@ target_link_libraries(DiscreteMath
         Qt::Widgets
         QXlsx::QXlsx
         Threads::Threads
+        OpenCL::OpenCL
         )
 
+
+add_custom_command(
+        TARGET DiscreteMath POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/style/Diffnes.qss
+        ${CMAKE_CURRENT_BINARY_DIR}/style/Diffnes.qss)
 
 if (WIN32)
     set(DEBUG_SUFFIX)

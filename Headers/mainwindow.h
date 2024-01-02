@@ -13,6 +13,9 @@
 #include "Calculator.h"
 #include <QMessageBox>
 #include <QThread>
+#include "GpuComputeTable.h"
+#include "gpu_settings.h"
+#include <memory>
 
 
 QT_BEGIN_NAMESPACE
@@ -32,9 +35,11 @@ public:
 private:
     Ui::MainWindow *ui;
 
-	Calculator* calculator = nullptr;
+	std::unique_ptr<Calculator> calculator;
 
 	Developer dev;
+
+	GPU_Settings settings_;
 
 	QThread thread;
 
@@ -51,6 +56,8 @@ private slots:
 	void show_error(QString);
 
 	void action_save();
+
+	void action_settings();
 
 	signals:
 	void save_signal(QString);

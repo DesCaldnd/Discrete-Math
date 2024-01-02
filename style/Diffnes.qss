@@ -677,25 +677,17 @@ QListView::item:hover {
 /*-----QCheckBox-----*/
 QCheckBox
 {
-	background-color: transparent;
+
+
+background-color: transparent;
     color: #fff;
 	border: none;
-
 }
 
 
 QCheckBox::indicator
 {
-    background-color: lightgray;
-    border: 1px solid #000;
-    width: 12px;
-    height: 12px;
 
-}
-
-
-QCheckBox::indicator:checked
-{
     image:url("./ressources/check.png");
 	background-color: #002b2b;
     border: 1px solid #3a546e;
@@ -703,9 +695,18 @@ QCheckBox::indicator:checked
 }
 
 
+QCheckBox::indicator:checked
+{
+    background-color: lightgray;
+    border: 1px solid #000;
+    width: 12px;
+    height: 12px;
+}
+
+
 QCheckBox::indicator:unchecked:hover
 {
-	border: 1px solid #46a2da; 
+	border: 1px solid #46a2da;
 
 }
 
@@ -724,6 +725,7 @@ QCheckBox::indicator:disabled
     border: 1px solid #656565;
 
 }
+
 
 
 /*-----QRadioButton-----*/

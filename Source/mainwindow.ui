@@ -114,6 +114,8 @@
     <addaction name="actionClose_Bracket"/>
     <addaction name="separator"/>
     <addaction name="actionBackspace"/>
+    <addaction name="separator"/>
+    <addaction name="actionSeparator"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -121,8 +123,15 @@
     </property>
     <addaction name="actionDeveloper"/>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionGPU_settings"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuSettings"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -158,6 +167,8 @@
    <addaction name="actionClose_Bracket"/>
    <addaction name="separator"/>
    <addaction name="actionBackspace"/>
+   <addaction name="separator"/>
+   <addaction name="actionSeparator"/>
   </widget>
   <action name="actionSave_Table">
    <property name="icon">
@@ -326,6 +337,24 @@
    </property>
    <property name="toolTip">
     <string>C variable</string>
+   </property>
+  </action>
+  <action name="actionGPU_settings">
+   <property name="text">
+    <string>GPU Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>GPU Settings</string>
+   </property>
+  </action>
+  <action name="actionSeparator">
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/Separator.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Separator</string>
    </property>
   </action>
  </widget>
